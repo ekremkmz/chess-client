@@ -1,5 +1,12 @@
-import 'package:chess/logic/cubit/game_board_logic/chess_piece.dart';
-import 'package:chess/logic/cubit/game_board_logic/game_board_logic_cubit.dart';
+import '../logic/cubit/game_board_logic/chess_coord.dart';
+import '../logic/cubit/game_board_logic/chess_piece/bishop_piece.dart';
+import '../logic/cubit/game_board_logic/chess_piece/chess_piece.dart';
+import '../logic/cubit/game_board_logic/chess_piece/king_piece.dart';
+import '../logic/cubit/game_board_logic/chess_piece/knight_piece.dart';
+import '../logic/cubit/game_board_logic/chess_piece/pawn_piece.dart';
+import '../logic/cubit/game_board_logic/chess_piece/queen_piece.dart';
+import '../logic/cubit/game_board_logic/chess_piece/rook_piece.dart';
+import '../logic/cubit/game_board_logic/game_board_logic_cubit.dart';
 
 Set<CastleSide> charsToCastleSide(String str) {
   final castleSide = <CastleSide>{};

@@ -1,7 +1,6 @@
-import 'dart:ui';
-
-import 'package:chess/logic/cubit/game_board_logic/game_board_logic_cubit.dart';
-import 'package:chess/pages/game_page/chess_piece_widget.dart';
+import '../../logic/cubit/game_board_logic/chess_coord.dart';
+import '../../logic/cubit/game_board_logic/game_board_logic_cubit.dart';
+import 'chess_piece_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -15,8 +14,6 @@ class GameBoardWidget extends StatelessWidget {
 
     if (state is GameBoardLogicInitial) {
       //TODO:ayarlarsın işte
-
-      cubit.newGame(Duration(hours: 1));
       return const Center(
         child: CircularProgressIndicator(),
       );

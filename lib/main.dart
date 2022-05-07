@@ -1,5 +1,6 @@
-import 'package:chess/logic/my_router_delagate.dart';
 import 'package:flutter/material.dart';
+
+import 'logic/router/my_router_delagate.dart';
 
 void main() {
   runApp(MyApp());

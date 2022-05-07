@@ -5,7 +5,10 @@ abstract class GameBoardLogicState {
   const GameBoardLogicState();
 }
 
-class GameBoardLogicInitial extends GameBoardLogicState {}
+class GameBoardLogicInitial extends GameBoardLogicState {
+  const GameBoardLogicInitial({required this.gameId}) : super();
+  final String gameId;
+}
 
 @CopyWith(copyWithNull: true, skipFields: true)
 class GameBoardLogicGaming extends GameBoardLogicState {
@@ -38,6 +41,25 @@ class GameBoardLogicGaming extends GameBoardLogicState {
   final Duration blackTime;
 
   final List<List<bool>>? movableLocations;
+
+  factory GameBoardLogicGaming.fromGame(Game game) {
+    final bs = game.boardState.target!;
+    return GameBoardLogicGaming(
+      whiteTime: Duration(milliseconds: game.white.target!.timeLeft),
+      blackTime: Duration(milliseconds: game.black.target!.timeLeft),
+      board: bs.toBoard(),
+      turn: bs.turn == 0 ? PieceColor.white : PieceColor.black,
+      castleSide: bs.toCastleSideSet(),
+      enPassant: bs.enPassant == null
+          ? null
+          : ChessCoord(
+              row: int.parse(bs.enPassant![1]),
+              column: coordsToInt[bs.enPassant![0]]!,
+            ),
+      halfMove: 0,
+      fullMove: 0,
+    );
+  }
 }
 
 enum CastleSide {
@@ -47,29 +69,22 @@ enum CastleSide {
   blackQueenSide,
 }
 
+CastleSide stringToCastleSide(String castleSide) {
+  switch (castleSide) {
+    case "K":
+      return CastleSide.whiteKingSide;
+    case "Q":
+      return CastleSide.whiteQueenSide;
+    case "k":
+      return CastleSide.blackKingSide;
+    case "q":
+      return CastleSide.blackQueenSide;
+    default:
+      throw ArgumentError("Invalid castle side: $castleSide");
+  }
+}
+
 enum PieceColor {
   white,
   black,
-}
-
-@immutable
-class ChessCoord with EquatableMixin {
-  const ChessCoord({
-    required this.row,
-    required this.column,
-  });
-
-  final int row;
-  final int column;
-
-  @override
-  List<Object?> get props => [row, column];
-
-  ChessCoord? operator +(ChessCoord ch) {
-    final row = this.row + ch.row;
-    final column = this.column + ch.column;
-
-    if (row > 7 || column > 7 || row < 0 || column < 0) return null;
-    return ChessCoord(row: row, column: column);
-  }
 }

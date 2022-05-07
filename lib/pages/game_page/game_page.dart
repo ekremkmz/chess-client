@@ -1,10 +1,10 @@
-import 'package:chess/logic/cubit/game_board_logic/game_board_logic_cubit.dart';
-import 'package:chess/pages/game_page/game_board_widget.dart';
+import 'game_board_widget.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 
 class GamePage extends StatelessWidget {
-  const GamePage({Key? key}) : super(key: key);
+  const GamePage({
+    Key? key,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -27,10 +27,7 @@ class GamePage extends StatelessWidget {
   }
 
   Widget _buildGameBoard() {
-    return BlocProvider(
-      create: (context) => GameBoardLogicCubit(),
-      child: const GameBoardWidget(),
-    );
+    return const GameBoardWidget();
   }
 
   Widget _buildYou() {

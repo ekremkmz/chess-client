@@ -1,0 +1,162 @@
+{
+  "_note1": "KEEP THIS FILE! Check it into a version control system (VCS) like git.",
+  "_note2": "ObjectBox manages crucial IDs for your object model. See docs for details.",
+  "_note3": "If you have VCS merge conflicts, you must resolve them according to ObjectBox docs.",
+  "entities": [
+    {
+      "id": "1:5376661069704407421",
+      "lastPropertyId": "10:2623725884273394636",
+      "name": "Game",
+      "properties": [
+        {
+          "id": "1:8933384301099839027",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:2880026226560832453",
+          "name": "time",
+          "type": 6
+        },
+        {
+          "id": "3:2544055168562387988",
+          "name": "add",
+          "type": 6
+        },
+        {
+          "id": "4:3836837350238356084",
+          "name": "lastPlayed",
+          "type": 12
+        },
+        {
+          "id": "5:5646228821341533188",
+          "name": "started",
+          "type": 12
+        },
+        {
+          "id": "6:916405754635247841",
+          "name": "gameState",
+          "type": 6
+        },
+        {
+          "id": "7:6190235275420951126",
+          "name": "whiteId",
+          "type": 11,
+          "flags": 520,
+          "indexId": "1:1912932908330587775",
+          "relationTarget": "PlayerState"
+        },
+        {
+          "id": "8:1602346353373518214",
+          "name": "blackId",
+          "type": 11,
+          "flags": 520,
+          "indexId": "2:2888310330993580914",
+          "relationTarget": "PlayerState"
+        },
+        {
+          "id": "9:5048434345176574628",
+          "name": "uid",
+          "type": 9,
+          "flags": 34848,
+          "indexId": "4:7204200851244413278"
+        },
+        {
+          "id": "10:2623725884273394636",
+          "name": "boardStateId",
+          "type": 11,
+          "flags": 520,
+          "indexId": "3:3437129481656225446",
+          "relationTarget": "BoardState"
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "3:1414973728443771360",
+      "lastPropertyId": "5:1269242932168400007",
+      "name": "PlayerState",
+      "properties": [
+        {
+          "id": "1:7645470363894516237",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "4:658593687533185472",
+          "name": "timeLeft",
+          "type": 6
+        },
+        {
+          "id": "5:1269242932168400007",
+          "name": "nick",
+          "type": 9,
+          "flags": 34848,
+          "indexId": "6:7113008722925850326"
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "4:5138410932425218197",
+      "lastPropertyId": "6:4049481241361662133",
+      "name": "BoardState",
+      "properties": [
+        {
+          "id": "1:2936046340598398236",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:359037032011443158",
+          "name": "turn",
+          "type": 6
+        },
+        {
+          "id": "3:2072368755772582215",
+          "name": "castleSides",
+          "type": 9
+        },
+        {
+          "id": "4:4124426998754540012",
+          "name": "halfMove",
+          "type": 6
+        },
+        {
+          "id": "5:6527055024824799925",
+          "name": "fullMove",
+          "type": 6
+        },
+        {
+          "id": "6:4049481241361662133",
+          "name": "enPassant",
+          "type": 9
+        }
+      ],
+      "relations": []
+    }
+  ],
+  "lastEntityId": "4:5138410932425218197",
+  "lastIndexId": "6:7113008722925850326",
+  "lastRelationId": "0:0",
+  "lastSequenceId": "0:0",
+  "modelVersion": 5,
+  "modelVersionParserMinimum": 5,
+  "retiredEntityUids": [
+    7154897424652175557
+  ],
+  "retiredIndexUids": [
+    7496769307385231534
+  ],
+  "retiredPropertyUids": [
+    5392970803299894319,
+    1548970870397139836,
+    3883704058047103362,
+    4866237985086350014
+  ],
+  "retiredRelationUids": [],
+  "version": 1
+}

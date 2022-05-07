@@ -1,19 +1,28 @@
-import 'dart:math';
-
 import 'package:bloc/bloc.dart';
-import 'package:chess/helper/fen_logic.dart';
+import 'package:chess/data/websocket/commands/play_move_command.dart';
+import 'package:chess/data/websocket/socket_manager.dart';
+import '../../../data/local/db_manager.dart';
+import '../../../data/local/models/game.dart';
 import 'package:copy_with_extension/copy_with_extension.dart';
-import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 import 'package:meta/meta.dart';
 
-import 'chess_piece.dart';
+import 'chess_coord.dart';
+import 'chess_piece/chess_piece.dart';
+import 'chess_piece/king_piece.dart';
 
 part 'game_board_logic_state.dart';
 part 'game_board_logic_state.g.dart';
 
 class GameBoardLogicCubit extends Cubit<GameBoardLogicState> {
-  GameBoardLogicCubit() : super(GameBoardLogicInitial());
+  GameBoardLogicCubit(String gameId)
+      : super(
+          GameBoardLogicInitial(gameId: gameId),
+        ) {
+    _initGame(gameId);
+  }
+
+  late Game game;
 
   PieceColor? playerColor;
 
@@ -30,6 +39,28 @@ class GameBoardLogicCubit extends Cubit<GameBoardLogicState> {
     board[target.row][target.column]!.move(target);
 
     emit(state.copyWith(board: board));
+
+    SocketManager.instance.sendCommand(PlayMoveCommand(
+      source: source,
+      target: target,
+      successHandler: (data) {
+        int timeleft = data!['timeleft'];
+        String nick = data['nick'];
+        if (game.white.target!.nick == nick) {
+          game.white.target!.timeLeft = timeleft;
+          emit(state.copyWith(
+            whiteTime: Duration(milliseconds: timeleft),
+          ));
+        } else if (game.black.target!.nick == nick) {
+          game.black.target!.timeLeft = timeleft;
+          emit(state.copyWith(
+            blackTime: Duration(milliseconds: timeleft),
+          ));
+        }
+        _saveGame();
+      },
+    ));
+    _saveGame();
   }
 
   void showMovableLocations(ChessCoord source) {
@@ -70,6 +101,7 @@ class GameBoardLogicCubit extends Cubit<GameBoardLogicState> {
         }
       }
     }
+
     // Check if your king is capturable
     for (var row in board) {
       for (var piece in row) {
@@ -82,15 +114,16 @@ class GameBoardLogicCubit extends Cubit<GameBoardLogicState> {
     return true;
   }
 
-  void newGame(Duration duration, [PieceColor? color]) {
+  /*
+  void newGame(Duration timeControl, Duration adder, [PieceColor? color]) {
     playerColor =
         color ?? (Random().nextBool() ? PieceColor.white : PieceColor.black);
 
-    fromFEN("rnbqkbnr/ppp2ppp/8/3ppP2/4P3/8/PPPP2PP/RNBQKBNR w KQkq e6 0 4",
-        duration);
+    fromFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+        timeControl, adder);
   }
 
-  void fromFEN(String fen, Duration duration) {
+  void fromFEN(String fen, Duration timeControl, Duration adder) {
     final list = fen.split(" ");
 
     final board = charsToChessPieceList(list[0]);
@@ -111,8 +144,8 @@ class GameBoardLogicCubit extends Cubit<GameBoardLogicState> {
     final fullMove = int.parse(list[5]);
 
     emit(GameBoardLogicGaming(
-      whiteTime: duration,
-      blackTime: duration,
+      whiteTime: timeControl,
+      blackTime: timeControl,
       board: board,
       turn: turn,
       castleSide: castleSide,
@@ -121,26 +154,15 @@ class GameBoardLogicCubit extends Cubit<GameBoardLogicState> {
       fullMove: fullMove,
     ));
   }
+  */
+
+  void _initGame(String gameId) {
+    game = DBManager.instance.getGame(gameId)!;
+
+    emit(GameBoardLogicGaming.fromGame(game));
+  }
+
+  void _saveGame() {
+    DBManager.instance.putGame(game);
+  }
 }
-
-final Map<String, int> coordsToInt = {
-  "a": 1,
-  "b": 2,
-  "c": 3,
-  "d": 4,
-  "e": 5,
-  "f": 6,
-  "g": 7,
-  "h": 8,
-};
-
-final Map<int, String> intToCoords = {
-  1: "a",
-  2: "b",
-  3: "c",
-  4: "d",
-  5: "e",
-  6: "f",
-  7: "g",
-  8: "h",
-};

@@ -1,4 +1,5 @@
-import 'package:chess/logic/my_router_delagate.dart';
+import '../../data/rest/dio_manager.dart';
+import '../../logic/router/my_router_delagate.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -47,6 +48,11 @@ class LoginPage extends StatelessWidget {
       ),
       style: ButtonStyle(
         backgroundColor: MaterialStateProperty.all(Colors.grey),
+        shape: MaterialStateProperty.all(
+          const RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(Radius.zero),
+          ),
+        ),
       ),
       onPressed: ctx.read<MyRouterDelegate>().goToRegisterPage,
     );
@@ -68,10 +74,25 @@ class LoginPage extends StatelessWidget {
       ),
       style: ButtonStyle(
         backgroundColor: MaterialStateProperty.all(Colors.white),
+        shape: MaterialStateProperty.all(
+          const RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(Radius.zero),
+          ),
+        ),
       ),
-      onPressed: () {
-        //TODO:check login
-        ctx.read<MyRouterDelegate>().goToHomePage();
+      onPressed: () async {
+        final username = _usernameController.text;
+        final password = _passwordController.text;
+
+        final result = await DioManager.instance.login(username, password);
+
+        result.fold((left) {
+          ScaffoldMessenger.of(ctx).showSnackBar(
+            SnackBar(
+              content: Text(left.message),
+            ),
+          );
+        }, ctx.read<MyRouterDelegate>().goToHomePage);
       },
     );
   }
@@ -97,9 +118,17 @@ class LoginPage extends StatelessWidget {
               fillColor: Colors.white,
               filled: true,
               prefixIcon: const Icon(Icons.lock),
-              suffixIcon: state == Visibility.nonVisible
-                  ? const Icon(Icons.visibility_off)
-                  : const Icon(Icons.visibility),
+              suffixIcon: GestureDetector(
+                onTap: () {
+                  _visibilityNotifier.value =
+                      _visibilityNotifier.value == Visibility.nonVisible
+                          ? Visibility.visible
+                          : Visibility.nonVisible;
+                },
+                child: state == Visibility.nonVisible
+                    ? const Icon(Icons.visibility_off)
+                    : const Icon(Icons.visibility),
+              ),
               border: border,
               focusedBorder: border,
             ),
