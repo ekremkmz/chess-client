@@ -60,7 +60,6 @@ class GameBoardLogicCubit extends Cubit<GameBoardLogicState> {
         _saveGame();
       },
     ));
-    _saveGame();
   }
 
   void showMovableLocations(ChessCoord source) {
@@ -80,6 +79,7 @@ class GameBoardLogicCubit extends Cubit<GameBoardLogicState> {
     emit(state.copyWith(movableLocations: null));
   }
 
+  // Checks if your king is a target after the move
   bool canMove(ChessCoord source, ChessCoord target) {
     final state = this.state as GameBoardLogicGaming;
     // Deep copy board
