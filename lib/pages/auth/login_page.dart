@@ -34,6 +34,15 @@ class LoginPage extends StatelessWidget {
 
   Widget _buildRegisterButton(BuildContext ctx) {
     return ElevatedButton(
+      style: ButtonStyle(
+        backgroundColor: MaterialStateProperty.all(Colors.grey),
+        shape: MaterialStateProperty.all(
+          const RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(Radius.zero),
+          ),
+        ),
+      ),
+      onPressed: ctx.read<MyRouterDelegate>().goToRegisterPage,
       child: const FractionallySizedBox(
         alignment: Alignment.center,
         widthFactor: 0.5,
@@ -46,20 +55,34 @@ class LoginPage extends StatelessWidget {
           textAlign: TextAlign.center,
         ),
       ),
+    );
+  }
+
+  Widget _buildLoginButton(BuildContext ctx) {
+    return ElevatedButton(
       style: ButtonStyle(
-        backgroundColor: MaterialStateProperty.all(Colors.grey),
+        backgroundColor: MaterialStateProperty.all(Colors.white),
         shape: MaterialStateProperty.all(
           const RoundedRectangleBorder(
             borderRadius: BorderRadius.all(Radius.zero),
           ),
         ),
       ),
-      onPressed: ctx.read<MyRouterDelegate>().goToRegisterPage,
-    );
-  }
+      onPressed: () async {
+        final username = _usernameController.text;
+        final password = _passwordController.text;
+        final router = ctx.read<MyRouterDelegate>();
 
-  Widget _buildLoginButton(BuildContext ctx) {
-    return ElevatedButton(
+        final result = await DioManager.instance.login(username, password);
+
+        result.fold((left) {
+          ScaffoldMessenger.of(ctx).showSnackBar(
+            SnackBar(
+              content: Text(left.message),
+            ),
+          );
+        }, router.goToHomePage);
+      },
       child: const FractionallySizedBox(
         alignment: Alignment.center,
         widthFactor: 0.5,
@@ -72,28 +95,6 @@ class LoginPage extends StatelessWidget {
           textAlign: TextAlign.center,
         ),
       ),
-      style: ButtonStyle(
-        backgroundColor: MaterialStateProperty.all(Colors.white),
-        shape: MaterialStateProperty.all(
-          const RoundedRectangleBorder(
-            borderRadius: BorderRadius.all(Radius.zero),
-          ),
-        ),
-      ),
-      onPressed: () async {
-        final username = _usernameController.text;
-        final password = _passwordController.text;
-
-        final result = await DioManager.instance.login(username, password);
-
-        result.fold((left) {
-          ScaffoldMessenger.of(ctx).showSnackBar(
-            SnackBar(
-              content: Text(left.message),
-            ),
-          );
-        }, ctx.read<MyRouterDelegate>().goToHomePage);
-      },
     );
   }
 

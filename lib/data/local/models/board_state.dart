@@ -1,3 +1,5 @@
+import 'package:chess/helper/fen_logic.dart';
+
 import '../../../logic/cubit/game_board_logic/chess_piece/chess_piece.dart';
 import '../../../logic/cubit/game_board_logic/game_board_logic_cubit.dart';
 import 'package:objectbox/objectbox.dart';
@@ -6,6 +8,8 @@ import 'package:objectbox/objectbox.dart';
 class BoardState {
   @Id()
   int id = 0;
+
+  late String board;
 
   late int turn;
 
@@ -17,10 +21,10 @@ class BoardState {
 
   String? enPassant;
 
-  List<List<ChessPiece?>> toBoard() {
-    //TODO: implement toBoard
-    return [];
-  }
+  List<List<ChessPiece?>> toBoard() => charsToChessPieceList(board);
+
+  void updateBoard(List<List<ChessPiece?>> board) =>
+      this.board = chessPieceListToChars(board);
 
   Set<CastleSide> toCastleSideSet() =>
       castleSides.split("").map(stringToCastleSide).toSet();

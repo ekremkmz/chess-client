@@ -1,8 +1,10 @@
+import 'package:chess/pages/home_page/tabs/my_games/mini_game_board_widget.dart';
+import 'package:provider/provider.dart';
+
 import '../../logic/cubit/game_board_logic/chess_coord.dart';
 import '../../logic/cubit/game_board_logic/game_board_logic_cubit.dart';
 import 'chess_piece_widget.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 
 class GameBoardWidget extends StatelessWidget {
   const GameBoardWidget({Key? key}) : super(key: key);
@@ -11,17 +13,19 @@ class GameBoardWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final cubit = context.watch<GameBoardLogicCubit>();
     final state = cubit.state;
+    final isWhite = cubit.playerColor == PieceColor.white;
 
     if (state is GameBoardLogicInitial) {
       //TODO:ayarlarsın işte
-      return const Center(
-        child: CircularProgressIndicator(),
+      return Provider.value(
+        value: cubit.game,
+        child: const MiniGameBoardWidget(),
       );
     }
 
     if (state is GameBoardLogicGaming) {
-      return AspectRatio(
-        aspectRatio: 1,
+      return RotatedBox(
+        quarterTurns: isWhite ? 0 : 2,
         child: Column(
           children: List.generate(
             8,
@@ -30,7 +34,7 @@ class GameBoardWidget extends StatelessWidget {
                 children: List.generate(
                   8,
                   (i2) => Expanded(
-                    child: _buildDragTarget(cubit, i1, i2),
+                    child: _buildDragTarget(cubit, i1, i2, isWhite),
                   ),
                 ),
               ),
@@ -42,7 +46,8 @@ class GameBoardWidget extends StatelessWidget {
     return const Text("Error");
   }
 
-  Widget _buildDragTarget(GameBoardLogicCubit cubit, int i1, int i2) {
+  Widget _buildDragTarget(
+      GameBoardLogicCubit cubit, int i1, int i2, bool isWhite) {
     final state = cubit.state as GameBoardLogicGaming;
     final target = ChessCoord(row: i1, column: i2);
 
@@ -52,6 +57,7 @@ class GameBoardWidget extends StatelessWidget {
       },
       onWillAccept: (data) {
         if (data! == target) return false;
+        if (state.movableLocations == null) return false;
         if (!state.movableLocations![target.row][target.column]) return false;
         final canMove = cubit.canMove(data, target);
         return canMove;
@@ -77,7 +83,13 @@ class GameBoardWidget extends StatelessWidget {
                     : null,
           ),
           child: piece != null
-              ? ChessPieceWidget(piece: piece, coord: target)
+              ? RotatedBox(
+                  quarterTurns: isWhite ? 0 : 2,
+                  child: ChessPieceWidget(
+                    piece: piece,
+                    coord: target,
+                  ),
+                )
               : ml == null
                   ? null
                   : ml[i1][i2]

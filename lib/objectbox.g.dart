@@ -114,7 +114,7 @@ final _entities = <ModelEntity>[
   ModelEntity(
       id: const IdUid(4, 5138410932425218197),
       name: 'BoardState',
-      lastPropertyId: const IdUid(6, 4049481241361662133),
+      lastPropertyId: const IdUid(7, 2434403504873887716),
       flags: 0,
       properties: <ModelProperty>[
         ModelProperty(
@@ -145,6 +145,11 @@ final _entities = <ModelEntity>[
         ModelProperty(
             id: const IdUid(6, 4049481241361662133),
             name: 'enPassant',
+            type: 9,
+            flags: 0),
+        ModelProperty(
+            id: const IdUid(7, 2434403504873887716),
+            name: 'board',
             type: 9,
             flags: 0)
       ],
@@ -300,13 +305,15 @@ ModelDefinition getObjectBoxModel() {
           final enPassantOffset = object.enPassant == null
               ? null
               : fbb.writeString(object.enPassant!);
-          fbb.startTable(7);
+          final boardOffset = fbb.writeString(object.board);
+          fbb.startTable(8);
           fbb.addInt64(0, object.id);
           fbb.addInt64(1, object.turn);
           fbb.addOffset(2, castleSidesOffset);
           fbb.addInt64(3, object.halfMove);
           fbb.addInt64(4, object.fullMove);
           fbb.addOffset(5, enPassantOffset);
+          fbb.addOffset(6, boardOffset);
           fbb.finish(fbb.endTable());
           return object.id;
         },
@@ -324,7 +331,9 @@ ModelDefinition getObjectBoxModel() {
             ..fullMove =
                 const fb.Int64Reader().vTableGet(buffer, rootOffset, 12, 0)
             ..enPassant = const fb.StringReader(asciiOptimization: true)
-                .vTableGetNullable(buffer, rootOffset, 14);
+                .vTableGetNullable(buffer, rootOffset, 14)
+            ..board = const fb.StringReader(asciiOptimization: true)
+                .vTableGet(buffer, rootOffset, 16, '');
 
           return object;
         })
@@ -411,4 +420,8 @@ class BoardState_ {
   /// see [BoardState.enPassant]
   static final enPassant =
       QueryStringProperty<BoardState>(_entities[2].properties[5]);
+
+  /// see [BoardState.board]
+  static final board =
+      QueryStringProperty<BoardState>(_entities[2].properties[6]);
 }

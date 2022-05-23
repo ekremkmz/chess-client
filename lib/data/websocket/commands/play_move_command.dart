@@ -23,8 +23,8 @@ class PlayMoveCommand extends Command {
       "command": commandTag,
       "commandId": commandId,
       "params": {
-        "source": source,
-        "target": target,
+        "source": source.toString(),
+        "target": target.toString(),
       },
     };
   }

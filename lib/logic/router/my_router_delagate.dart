@@ -1,3 +1,5 @@
+import 'package:chess/data/local/models/game.dart';
+
 import '../../data/local/models/user.dart';
 import '../cubit/game_board_logic/game_board_logic_cubit.dart';
 import '../../pages/auth/login_page.dart';
@@ -18,6 +20,8 @@ class MyRouterDelegate extends RouterDelegate
 
   bool _isInitialized = false;
 
+  Game? _game;
+
   String? _gameId;
 
   @override
@@ -29,34 +33,51 @@ class MyRouterDelegate extends RouterDelegate
         ),
         Provider.value(
           value: _user,
-        )
+        ),
       ],
+      builder: (context, child) => child!,
       child: Navigator(
         key: _navigatorKey,
         observers: [_heroController],
         pages: [
           if (!_isInitialized)
             const MaterialPage(
+              key: ValueKey("/splash"),
               child: SplashScreen(),
             )
           else if (_user == null)
             MaterialPage(
+              key: const ValueKey("/login"),
               child: LoginPage(),
             )
           else
             const MaterialPage(
+              key: ValueKey("/home"),
               child: HomePage(),
             ),
           if (_gameId != null)
             MaterialPage(
+              key: ValueKey("/game$_game"),
               child: BlocProvider(
-                create: (context) => GameBoardLogicCubit(_gameId!),
+                create: (context) => GameBoardLogicCubit(
+                  game: _game,
+                  gameId: _gameId!,
+                  userNick: _user!.nick,
+                ),
                 child: const GamePage(),
               ),
             ),
         ],
         onPopPage: (route, result) {
-          if (route.didPop(result)) return false;
+          if (!route.didPop(result)) return false;
+
+          if (_game != null) {
+            _game = null;
+            _gameId = null;
+            notifyListeners();
+            return true;
+          }
+
           return true;
         },
       ),
@@ -82,15 +103,9 @@ class MyRouterDelegate extends RouterDelegate
     notifyListeners();
   }
 
-  void goToGamePage(String gameId) {
+  void goToGamePage(String gameId, [Game? game]) {
     _gameId = gameId;
+    _game = game;
     notifyListeners();
-  }
-
-  @override
-  void notifyListeners() {
-    WidgetsBinding.instance!.addPostFrameCallback((_) {
-      super.notifyListeners();
-    });
   }
 }

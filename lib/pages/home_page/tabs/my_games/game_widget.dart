@@ -1,20 +1,32 @@
-import '../../../../data/local/models/game.dart';
-import 'package:flutter/material.dart';
+import 'package:chess/pages/home_page/tabs/my_games/mini_game_board_widget.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
 
+import '../../../../data/local/models/game.dart';
+import 'package:flutter/material.dart';
+
 class GameWidget extends StatelessWidget {
-  const GameWidget({Key? key}) : super(key: key);
+  const GameWidget({
+    Key? key,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    final game = Provider.of<Game>(context, listen: false);
+    final game = context.read<Game>();
+    final size = MediaQuery.of(context).size;
     return Card(
       child: Row(
         children: [
-          Container(
-            width: 100,
-            height: 100,
-            color: Colors.red,
+          SizedBox(
+            width: size.width / 3,
+            height: size.width / 3,
+            child: Hero(
+              tag: game.uid,
+              child: Provider.value(
+                value: game,
+                child: const MiniGameBoardWidget(),
+              ),
+            ),
           ),
           Expanded(
             child: _buildGameDetails(game),
@@ -24,33 +36,36 @@ class GameWidget extends StatelessWidget {
     );
   }
 
-  Column _buildGameDetails(Game g) {
-    return Column(
-      children: [
-        Row(
-          children: [
-            Image.asset(
-              "assets/images/white_king.png",
-              width: 30,
-              height: 30,
-            ),
-            const SizedBox(width: 10),
-            Text(g.white.target?.nick ?? "?"),
-          ],
-        ),
-        const Divider(),
-        Row(
-          children: [
-            Image.asset(
-              "assets/images/black_king.png",
-              width: 30,
-              height: 30,
-            ),
-            const SizedBox(width: 10),
-            Text(g.black.target?.nick ?? "?"),
-          ],
-        ),
-      ],
+  Widget _buildGameDetails(Game g) {
+    return Padding(
+      padding: const EdgeInsets.all(20.0),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Image.asset(
+                "assets/images/pieces/white_king.png",
+                width: 30,
+                height: 30,
+              ),
+              const SizedBox(width: 10),
+              Text(g.white.target?.nick ?? "?"),
+            ],
+          ),
+          const Divider(),
+          Row(
+            children: [
+              Image.asset(
+                "assets/images/pieces/black_king.png",
+                width: 30,
+                height: 30,
+              ),
+              const SizedBox(width: 10),
+              Text(g.black.target?.nick ?? "?"),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }

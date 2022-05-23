@@ -13,6 +13,8 @@ class GameBoardLogicInitial extends GameBoardLogicState {
 @CopyWith(copyWithNull: true, skipFields: true)
 class GameBoardLogicGaming extends GameBoardLogicState {
   const GameBoardLogicGaming({
+    required this.whiteNick,
+    required this.blackNick,
     required this.whiteTime,
     required this.blackTime,
     required this.board,
@@ -36,28 +38,33 @@ class GameBoardLogicGaming extends GameBoardLogicState {
 
   final int fullMove;
 
-  final Duration whiteTime;
+  final String? whiteNick;
 
-  final Duration blackTime;
+  final Duration? whiteTime;
+
+  final String? blackNick;
+
+  final Duration? blackTime;
 
   final List<List<bool>>? movableLocations;
 
   factory GameBoardLogicGaming.fromGame(Game game) {
     final bs = game.boardState.target!;
+    final white = game.white.target;
+    final black = game.black.target;
+
     return GameBoardLogicGaming(
-      whiteTime: Duration(milliseconds: game.white.target!.timeLeft),
-      blackTime: Duration(milliseconds: game.black.target!.timeLeft),
+      whiteTime: white == null ? null : Duration(milliseconds: white.timeLeft),
+      blackTime: black == null ? null : Duration(milliseconds: black.timeLeft),
       board: bs.toBoard(),
       turn: bs.turn == 0 ? PieceColor.white : PieceColor.black,
       castleSide: bs.toCastleSideSet(),
-      enPassant: bs.enPassant == null
-          ? null
-          : ChessCoord(
-              row: int.parse(bs.enPassant![1]),
-              column: coordsToInt[bs.enPassant![0]]!,
-            ),
+      enPassant:
+          bs.enPassant == null ? null : ChessCoord.fromString(bs.enPassant!),
       halfMove: 0,
       fullMove: 0,
+      whiteNick: white?.nick,
+      blackNick: black?.nick,
     );
   }
 }

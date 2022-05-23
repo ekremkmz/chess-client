@@ -47,4 +47,7 @@ class BishopPiece extends ChessPiece {
 
   @override
   String get name => "bishop";
+
+  @override
+  String get char => 'b';
 }

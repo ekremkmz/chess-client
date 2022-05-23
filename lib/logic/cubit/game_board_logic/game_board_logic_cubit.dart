@@ -1,11 +1,14 @@
-import 'package:bloc/bloc.dart';
+import 'dart:async';
+
+import 'package:chess/data/local/models/player_state.dart';
+import 'package:chess/data/websocket/commands/get_game_from_server_command.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:chess/data/websocket/commands/play_move_command.dart';
 import 'package:chess/data/websocket/socket_manager.dart';
 import '../../../data/local/db_manager.dart';
 import '../../../data/local/models/game.dart';
 import 'package:copy_with_extension/copy_with_extension.dart';
 import 'package:flutter/material.dart';
-import 'package:meta/meta.dart';
 
 import 'chess_coord.dart';
 import 'chess_piece/chess_piece.dart';
@@ -15,16 +18,23 @@ part 'game_board_logic_state.dart';
 part 'game_board_logic_state.g.dart';
 
 class GameBoardLogicCubit extends Cubit<GameBoardLogicState> {
-  GameBoardLogicCubit(String gameId)
-      : super(
-          GameBoardLogicInitial(gameId: gameId),
-        ) {
+  GameBoardLogicCubit({
+    this.game,
+    required this.gameId,
+    required this.userNick,
+  }) : super(GameBoardLogicInitial(gameId: gameId)) {
     _initGame(gameId);
   }
 
-  late Game game;
+  Game? game;
 
-  PieceColor? playerColor;
+  final String gameId;
+
+  final String userNick;
+
+  late StreamSubscription<Game?> streamSub;
+
+  late PieceColor playerColor;
 
   void move(ChessCoord source, ChessCoord target) {
     final state = this.state as GameBoardLogicGaming;
@@ -38,26 +48,30 @@ class GameBoardLogicCubit extends Cubit<GameBoardLogicState> {
     board[source.row][source.column] = null;
     board[target.row][target.column]!.move(target);
 
+    // Not persistent yet on the local DB
     emit(state.copyWith(board: board));
 
     SocketManager.instance.sendCommand(PlayMoveCommand(
       source: source,
       target: target,
       successHandler: (data) {
+        final game = this.game;
+        final boardRef = board;
         int timeleft = data!['timeleft'];
-        String nick = data['nick'];
-        if (game.white.target!.nick == nick) {
-          game.white.target!.timeLeft = timeleft;
-          emit(state.copyWith(
-            whiteTime: Duration(milliseconds: timeleft),
-          ));
-        } else if (game.black.target!.nick == nick) {
-          game.black.target!.timeLeft = timeleft;
-          emit(state.copyWith(
-            blackTime: Duration(milliseconds: timeleft),
-          ));
+
+        switch (playerColor) {
+          case PieceColor.white:
+            game!.white.target!.timeLeft = timeleft;
+            break;
+          case PieceColor.black:
+            game!.black.target!.timeLeft = timeleft;
+            break;
+          default:
         }
-        _saveGame();
+
+        game!.boardState.target!.updateBoard(boardRef);
+
+        DBManager.instance.putGame(game);
       },
     ));
   }
@@ -157,12 +171,53 @@ class GameBoardLogicCubit extends Cubit<GameBoardLogicState> {
   */
 
   void _initGame(String gameId) {
-    game = DBManager.instance.getGame(gameId)!;
+    if (game == null) {
+      SocketManager.instance.sendCommand(GetGameFromServerCommand(
+          gameId: gameId,
+          successHandler: (data) {
+            game = Game.fromJson(data!);
+            //TODO:
+          }));
+      return;
+    }
+    if (game!.black.target?.nick == userNick) {
+      playerColor = PieceColor.black;
+    } else if (game!.white.target?.nick == userNick) {
+      playerColor = PieceColor.white;
+    }
 
-    emit(GameBoardLogicGaming.fromGame(game));
+    streamSub = DBManager.instance.getGameAsStream(gameId).listen((game) {
+      this.game = game;
+
+      emit(GameBoardLogicGaming.fromGame(game));
+    });
   }
 
-  void _saveGame() {
-    DBManager.instance.putGame(game);
+  PlayerState? get you {
+    switch (playerColor) {
+      case PieceColor.white:
+        return game!.white.target;
+      case PieceColor.black:
+        return game!.black.target;
+      default:
+        return null;
+    }
+  }
+
+  PlayerState? get opponent {
+    switch (playerColor) {
+      case PieceColor.white:
+        return game!.black.target;
+      case PieceColor.black:
+        return game!.white.target;
+      default:
+        return null;
+    }
+  }
+
+  @override
+  Future<void> close() async {
+    await streamSub.cancel();
+    await super.close();
   }
 }

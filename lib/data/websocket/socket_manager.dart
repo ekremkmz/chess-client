@@ -1,5 +1,8 @@
 import 'dart:convert';
+import 'dart:developer';
 import 'dart:io';
+
+import 'package:chess/logic/cubit/game_board_logic/chess_coord.dart';
 
 import '../local/db_manager.dart';
 import '../globals.dart';
@@ -22,7 +25,7 @@ class SocketManager {
 
   void initSocket() async {
     final cookies = await PersistCookieJar(
-      storage: FileStorage(Globals.appDir.path + '/.cookies'),
+      storage: FileStorage('${Globals.appDir.path}/.cookies'),
     ).loadForRequest(Uri.parse(Globals.restUrl));
     instance.socket = await WebSocket.connect(Globals.wsUrl, headers: {
       'Cookie': cookies.join("; "),
@@ -46,14 +49,26 @@ class SocketManager {
         _addToWaitingSuccess(data["commandId"]);
         break;
       case "error":
-        //TODO: handle error
+        _handleError(data);
         break;
       case "success":
         _handleSuccess(data);
         break;
       case "playMove":
-        final game = DBManager.instance.getGame("");
+        final params = data["data"];
+        final target = ChessCoord.fromString(params["target"]);
+        final source = ChessCoord.fromString(params["source"]);
 
+        final game = DBManager.instance.getGame(params["gameId"])!;
+
+        final board = game.boardState.target!.toBoard();
+
+        board[target.row][target.column] = board[source.row][source.column];
+        board[source.row][source.column] = null;
+        board[target.row][target.column]!.move(target);
+        game.boardState.target!.updateBoard(board);
+
+        DBManager.instance.putGame(game);
         break;
       default:
     }
@@ -75,5 +90,11 @@ class SocketManager {
     if (command == null) return;
 
     command.successHandler?.call(data["data"]);
+  }
+
+  void _handleError(Map<String, dynamic> data) {
+    waitingSuccess.remove(data["commandId"]);
+
+    log(data["data"]);
   }
 }

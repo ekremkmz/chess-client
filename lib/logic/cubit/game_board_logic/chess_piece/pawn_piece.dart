@@ -61,5 +61,8 @@ class PawnPiece extends ChessPiece {
   }
 
   @override
+  String get char => 'p';
+
+  @override
   String get name => "pawn";
 }

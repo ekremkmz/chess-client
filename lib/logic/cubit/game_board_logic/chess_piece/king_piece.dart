@@ -38,5 +38,8 @@ class KingPiece extends ChessPiece {
   }
 
   @override
+  String get char => 'k';
+
+  @override
   String get name => "king";
 }

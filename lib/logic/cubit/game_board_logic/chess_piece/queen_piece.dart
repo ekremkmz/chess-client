@@ -50,5 +50,8 @@ class QueenPiece extends ChessPiece {
   }
 
   @override
+  String get char => 'q';
+
+  @override
   String get name => "queen";
 }

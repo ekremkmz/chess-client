@@ -14,6 +14,7 @@ abstract class _$GameBoardLogicGamingCWProxy {
   /// GameBoardLogicGaming(...).copyWith(id: 12, name: "My name")
   /// ````
   GameBoardLogicGaming call({
+    String? blackNick,
     Duration? blackTime,
     List<List<ChessPiece?>>? board,
     Set<CastleSide>? castleSide,
@@ -22,6 +23,7 @@ abstract class _$GameBoardLogicGamingCWProxy {
     int? halfMove,
     List<List<bool>>? movableLocations,
     PieceColor? turn,
+    String? whiteNick,
     Duration? whiteTime,
   });
 }
@@ -42,6 +44,7 @@ class _$GameBoardLogicGamingCWProxyImpl
   /// GameBoardLogicGaming(...).copyWith(id: 12, name: "My name")
   /// ````
   GameBoardLogicGaming call({
+    Object? blackNick = const $CopyWithPlaceholder(),
     Object? blackTime = const $CopyWithPlaceholder(),
     Object? board = const $CopyWithPlaceholder(),
     Object? castleSide = const $CopyWithPlaceholder(),
@@ -50,13 +53,18 @@ class _$GameBoardLogicGamingCWProxyImpl
     Object? halfMove = const $CopyWithPlaceholder(),
     Object? movableLocations = const $CopyWithPlaceholder(),
     Object? turn = const $CopyWithPlaceholder(),
+    Object? whiteNick = const $CopyWithPlaceholder(),
     Object? whiteTime = const $CopyWithPlaceholder(),
   }) {
     return GameBoardLogicGaming(
-      blackTime: blackTime == const $CopyWithPlaceholder() || blackTime == null
+      blackNick: blackNick == const $CopyWithPlaceholder()
+          ? _value.blackNick
+          // ignore: cast_nullable_to_non_nullable
+          : blackNick as String?,
+      blackTime: blackTime == const $CopyWithPlaceholder()
           ? _value.blackTime
           // ignore: cast_nullable_to_non_nullable
-          : blackTime as Duration,
+          : blackTime as Duration?,
       board: board == const $CopyWithPlaceholder() || board == null
           ? _value.board
           // ignore: cast_nullable_to_non_nullable
@@ -86,10 +94,14 @@ class _$GameBoardLogicGamingCWProxyImpl
           ? _value.turn
           // ignore: cast_nullable_to_non_nullable
           : turn as PieceColor,
-      whiteTime: whiteTime == const $CopyWithPlaceholder() || whiteTime == null
+      whiteNick: whiteNick == const $CopyWithPlaceholder()
+          ? _value.whiteNick
+          // ignore: cast_nullable_to_non_nullable
+          : whiteNick as String?,
+      whiteTime: whiteTime == const $CopyWithPlaceholder()
           ? _value.whiteTime
           // ignore: cast_nullable_to_non_nullable
-          : whiteTime as Duration,
+          : whiteTime as Duration?,
     );
   }
 }
@@ -106,11 +118,16 @@ extension $GameBoardLogicGamingCopyWith on GameBoardLogicGaming {
   /// GameBoardLogicGaming(...).copyWithNull(firstField: true, secondField: true)
   /// ````
   GameBoardLogicGaming copyWithNull({
+    bool blackNick = false,
+    bool blackTime = false,
     bool enPassant = false,
     bool movableLocations = false,
+    bool whiteNick = false,
+    bool whiteTime = false,
   }) {
     return GameBoardLogicGaming(
-      blackTime: blackTime,
+      blackNick: blackNick == true ? null : this.blackNick,
+      blackTime: blackTime == true ? null : this.blackTime,
       board: board,
       castleSide: castleSide,
       enPassant: enPassant == true ? null : this.enPassant,
@@ -118,7 +135,8 @@ extension $GameBoardLogicGamingCopyWith on GameBoardLogicGaming {
       halfMove: halfMove,
       movableLocations: movableLocations == true ? null : this.movableLocations,
       turn: turn,
-      whiteTime: whiteTime,
+      whiteNick: whiteNick == true ? null : this.whiteNick,
+      whiteTime: whiteTime == true ? null : this.whiteTime,
     );
   }
 }

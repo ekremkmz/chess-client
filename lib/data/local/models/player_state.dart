@@ -6,7 +6,6 @@ class PlayerState {
   @Id()
   int id = 0;
 
-  @Unique(onConflict: ConflictStrategy.replace)
   late String nick;
 
   // Milliseconds
@@ -15,7 +14,7 @@ class PlayerState {
   factory PlayerState.fromJson(data) {
     final p = PlayerState()
       ..nick = data["nick"]
-      ..timeLeft = data["timeLeft"];
+      ..timeLeft = data["timeleft"];
     return p;
   }
 }

@@ -1,7 +1,7 @@
 import 'command.dart';
 
-class GetGameFromServer extends Command {
-  GetGameFromServer({
+class GetGameFromServerCommand extends Command {
+  GetGameFromServerCommand({
     required this.gameId,
     this.successHandler,
   });

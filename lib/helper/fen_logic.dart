@@ -124,3 +124,37 @@ List<List<ChessPiece?>> charsToChessPieceList(String chars) {
   }
   return lists;
 }
+
+String chessPieceListToChars(List<List<ChessPiece?>> lists) {
+  final chars = <String>[];
+
+  for (var row = 0; row < lists.length; row++) {
+    final list = lists[row];
+
+    final selectedRow = <String>[];
+
+    var nullCounter = 0;
+
+    for (var column = 0; column < list.length; column++) {
+      final chessPiece = list[column];
+
+      if (chessPiece != null) {
+        if (nullCounter != 0) {
+          selectedRow.add("$nullCounter");
+          nullCounter = 0;
+        }
+        selectedRow.add(chessPiece.toChar());
+      } else {
+        nullCounter++;
+      }
+    }
+
+    if (nullCounter != 0) {
+      selectedRow.add("$nullCounter");
+      nullCounter = 0;
+    }
+
+    chars.add(selectedRow.join(""));
+  }
+  return chars.join("/");
+}

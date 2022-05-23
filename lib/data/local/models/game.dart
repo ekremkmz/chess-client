@@ -42,10 +42,11 @@ class Game {
     final bs = data["boardState"];
 
     final b = BoardState()
-      ..turn = bs["turn"]
-      ..castleSides = bs["castleSides"]
+      ..turn = bs["activeColor"]
+      ..castleSides = List.from(bs["castlingRights"]).join()
       ..halfMove = bs["halfMove"]
-      ..fullMove = bs["fullMove"];
+      ..fullMove = bs["fullMove"]
+      ..board = bs["board"];
 
     g.boardState.target = b;
 

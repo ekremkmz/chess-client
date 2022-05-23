@@ -47,5 +47,8 @@ class RookPiece extends ChessPiece {
   }
 
   @override
+  String get char => 'r';
+
+  @override
   String get name => "rook";
 }

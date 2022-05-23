@@ -1,3 +1,7 @@
+import 'dart:io';
+
+import 'package:flutter/material.dart';
+
 import '../globals.dart';
 import 'models/game.dart';
 import '../../objectbox.g.dart';
@@ -11,7 +15,7 @@ class DBManager {
 
   static Future<void> init() async {
     instance._store =
-        await openStore(directory: Globals.appDir.path + "/objectbox");
+        await openStore(directory: "${Globals.appDir.path}/objectbox");
     instance._gameBox = instance._store.box<Game>();
   }
 
@@ -27,11 +31,25 @@ class DBManager {
     _gameBox.put(game);
   }
 
+  Stream<Game> getGameAsStream(String uid) {
+    final qb = _gameBox.query(Game_.uid.equals(uid));
+    return qb
+        .watch(triggerImmediately: true)
+        .asBroadcastStream()
+        .asyncMap((event) => event.findFirst()!);
+  }
+
   Stream<List<Game>> getAllGamesStream() {
     return _gameBox
         .query()
-        .watch()
+        .watch(triggerImmediately: true)
         .asBroadcastStream()
         .asyncMap<List<Game>>((event) => event.find());
+  }
+
+  void clearDatabase() {
+    Directory(_store.directoryPath).delete(recursive: true).then((value) {
+      debugPrint("Deleted all database");
+    });
   }
 }

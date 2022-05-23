@@ -37,5 +37,8 @@ class KnightPiece extends ChessPiece {
   }
 
   @override
+  String get char => 'n';
+
+  @override
   String get name => "knight";
 }

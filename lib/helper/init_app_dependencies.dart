@@ -8,7 +8,7 @@ import 'check_needed_permissions.dart';
 Future<void> initAppDependencies() async {
   Globals.appDir = await getApplicationDocumentsDirectory();
 
-  checkNeededPermissions();
+  await checkNeededPermissions();
 
   DioManager.init();
 

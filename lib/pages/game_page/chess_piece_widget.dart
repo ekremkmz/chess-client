@@ -19,7 +19,11 @@ class ChessPieceWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final cubit = context.read<GameBoardLogicCubit>();
 
-    final isPieceMine = cubit.playerColor! == piece.color;
+    final state = cubit.state as GameBoardLogicGaming;
+
+    final isPieceMine = cubit.playerColor == piece.color;
+
+    final isItMyTurn = state.turn == cubit.playerColor;
 
     return LayoutBuilder(
       builder: (context, constrains) {
@@ -34,13 +38,9 @@ class ChessPieceWidget extends StatelessWidget {
         );
 
         return Center(
-          child: isPieceMine
+          child: isItMyTurn && isPieceMine
               ? Draggable<ChessCoord>(
                   onDragStarted: () => cubit.showMovableLocations(coord),
-                  child: GestureDetector(
-                    onTap: () => cubit.showMovableLocations(coord),
-                    child: imageWidget,
-                  ),
                   onDragEnd: (details) {
                     cubit.hideMovableLocations();
                   },
@@ -54,6 +54,10 @@ class ChessPieceWidget extends StatelessWidget {
                     height: size,
                   ),
                   data: coord,
+                  child: GestureDetector(
+                    onTap: () => cubit.showMovableLocations(coord),
+                    child: imageWidget,
+                  ),
                 )
               : imageWidget,
         );

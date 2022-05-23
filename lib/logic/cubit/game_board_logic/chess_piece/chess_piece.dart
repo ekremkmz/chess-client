@@ -38,6 +38,12 @@ abstract class ChessPiece {
     coord = cc;
   }
 
+  String get char;
+
+  String toChar() {
+    return color == PieceColor.white ? char.toUpperCase() : char;
+  }
+
   @override
   String toString() {
     return "${color.name}_$name";

@@ -11,6 +11,8 @@ class MyApp extends StatelessWidget {
 
   final _routerDelegate = MyRouterDelegate();
 
+  final _backbuttonDispatcher = RootBackButtonDispatcher();
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -20,6 +22,7 @@ class MyApp extends StatelessWidget {
       ),
       home: Router(
         routerDelegate: _routerDelegate,
+        backButtonDispatcher: _backbuttonDispatcher,
       ),
     );
   }

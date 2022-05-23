@@ -21,7 +21,7 @@ class DioManager {
     _dioInstance.options.baseUrl = Globals.restUrl;
     final cookieManager = CookieManager(
       PersistCookieJar(
-        storage: FileStorage(Globals.appDir.path + '/.cookies'),
+        storage: FileStorage('${Globals.appDir.path}/.cookies'),
       ),
     );
     _dioInstance.interceptors.add(cookieManager);
@@ -35,7 +35,7 @@ class DioManager {
     }
 
     return _apiErrorWrapper(() async {
-      final response = await _dioInstance.get('/auth/logout');
+      await _dioInstance.get('/auth/logout');
       return const Right(null);
     });
   }
