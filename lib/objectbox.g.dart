@@ -44,12 +44,12 @@ final _entities = <ModelEntity>[
         ModelProperty(
             id: const IdUid(4, 3836837350238356084),
             name: 'lastPlayed',
-            type: 12,
+            type: 6,
             flags: 0),
         ModelProperty(
             id: const IdUid(5, 5646228821341533188),
             name: 'started',
-            type: 12,
+            type: 6,
             flags: 0),
         ModelProperty(
             id: const IdUid(6, 916405754635247841),
@@ -106,8 +106,7 @@ final _entities = <ModelEntity>[
             id: const IdUid(5, 1269242932168400007),
             name: 'nick',
             type: 9,
-            flags: 34848,
-            indexId: const IdUid(6, 7113008722925850326))
+            flags: 0)
       ],
       relations: <ModelRelation>[],
       backlinks: <ModelBacklink>[]),
@@ -182,7 +181,7 @@ ModelDefinition getObjectBoxModel() {
       lastRelationId: const IdUid(0, 0),
       lastSequenceId: const IdUid(0, 0),
       retiredEntityUids: const [7154897424652175557],
-      retiredIndexUids: const [7496769307385231534],
+      retiredIndexUids: const [7496769307385231534, 7113008722925850326],
       retiredPropertyUids: const [
         5392970803299894319,
         1548970870397139836,
@@ -210,16 +209,8 @@ ModelDefinition getObjectBoxModel() {
           fbb.addInt64(0, object.id);
           fbb.addInt64(1, object.time);
           fbb.addInt64(2, object.add);
-          fbb.addInt64(
-              3,
-              object.lastPlayed == null
-                  ? null
-                  : object.lastPlayed!.microsecondsSinceEpoch * 1000);
-          fbb.addInt64(
-              4,
-              object.started == null
-                  ? null
-                  : object.started!.microsecondsSinceEpoch * 1000);
+          fbb.addInt64(3, object.lastPlayed);
+          fbb.addInt64(4, object.started);
           fbb.addInt64(5, object.gameState);
           fbb.addInt64(6, object.white.targetId);
           fbb.addInt64(7, object.black.targetId);
@@ -231,22 +222,15 @@ ModelDefinition getObjectBoxModel() {
         objectFromFB: (Store store, ByteData fbData) {
           final buffer = fb.BufferContext(fbData);
           final rootOffset = buffer.derefObject(0);
-          final lastPlayedValue =
-              const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 10);
-          final startedValue =
-              const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 12);
+
           final object = Game()
             ..id = const fb.Int64Reader().vTableGet(buffer, rootOffset, 4, 0)
             ..time = const fb.Int64Reader().vTableGet(buffer, rootOffset, 6, 0)
             ..add = const fb.Int64Reader().vTableGet(buffer, rootOffset, 8, 0)
-            ..lastPlayed = lastPlayedValue == null
-                ? null
-                : DateTime.fromMicrosecondsSinceEpoch(
-                    (lastPlayedValue / 1000).round())
-            ..started = startedValue == null
-                ? null
-                : DateTime.fromMicrosecondsSinceEpoch(
-                    (startedValue / 1000).round())
+            ..lastPlayed =
+                const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 10)
+            ..started =
+                const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 12)
             ..gameState =
                 const fb.Int64Reader().vTableGet(buffer, rootOffset, 14, 0)
             ..uid = const fb.StringReader(asciiOptimization: true)

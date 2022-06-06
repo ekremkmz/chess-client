@@ -1,8 +1,17 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import 'logic/router/my_router_delagate.dart';
+import 'package:wakelock/wakelock.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  if (kDebugMode) {
+    print('activating wakelock in debug');
+    Wakelock.enable();
+  }
+
   runApp(MyApp());
 }
 

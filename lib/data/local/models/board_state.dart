@@ -1,4 +1,4 @@
-import 'package:chess/helper/fen_logic.dart';
+import '../../../helper/fen_logic.dart';
 
 import '../../../logic/cubit/game_board_logic/chess_piece/chess_piece.dart';
 import '../../../logic/cubit/game_board_logic/game_board_logic_cubit.dart';

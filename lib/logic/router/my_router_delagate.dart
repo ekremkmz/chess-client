@@ -1,5 +1,4 @@
-import 'package:chess/data/local/models/game.dart';
-
+import '../../data/local/models/game.dart';
 import '../../data/local/models/user.dart';
 import '../cubit/game_board_logic/game_board_logic_cubit.dart';
 import '../../pages/auth/login_page.dart';
@@ -71,7 +70,7 @@ class MyRouterDelegate extends RouterDelegate
         onPopPage: (route, result) {
           if (!route.didPop(result)) return false;
 
-          if (_game != null) {
+          if (_gameId != null) {
             _game = null;
             _gameId = null;
             notifyListeners();

@@ -20,6 +20,7 @@ abstract class _$GameBoardLogicGamingCWProxy {
     Set<CastleSide>? castleSide,
     ChessCoord? enPassant,
     int? fullMove,
+    int? gameState,
     int? halfMove,
     List<List<bool>>? movableLocations,
     PieceColor? turn,
@@ -50,6 +51,7 @@ class _$GameBoardLogicGamingCWProxyImpl
     Object? castleSide = const $CopyWithPlaceholder(),
     Object? enPassant = const $CopyWithPlaceholder(),
     Object? fullMove = const $CopyWithPlaceholder(),
+    Object? gameState = const $CopyWithPlaceholder(),
     Object? halfMove = const $CopyWithPlaceholder(),
     Object? movableLocations = const $CopyWithPlaceholder(),
     Object? turn = const $CopyWithPlaceholder(),
@@ -82,6 +84,10 @@ class _$GameBoardLogicGamingCWProxyImpl
           ? _value.fullMove
           // ignore: cast_nullable_to_non_nullable
           : fullMove as int,
+      gameState: gameState == const $CopyWithPlaceholder() || gameState == null
+          ? _value.gameState
+          // ignore: cast_nullable_to_non_nullable
+          : gameState as int,
       halfMove: halfMove == const $CopyWithPlaceholder() || halfMove == null
           ? _value.halfMove
           // ignore: cast_nullable_to_non_nullable
@@ -132,6 +138,7 @@ extension $GameBoardLogicGamingCopyWith on GameBoardLogicGaming {
       castleSide: castleSide,
       enPassant: enPassant == true ? null : this.enPassant,
       fullMove: fullMove,
+      gameState: gameState,
       halfMove: halfMove,
       movableLocations: movableLocations == true ? null : this.movableLocations,
       turn: turn,

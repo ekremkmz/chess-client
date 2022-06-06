@@ -13,7 +13,8 @@ dependencies:
     sdk: flutter
 
   # Widgets
-  cupertino_icons: ^1.0.2
+  stop_watch_timer: ^1.4.0
+  lottie: ^1.3.0
 
   # State management
   provider: ^6.0.2
@@ -32,10 +33,13 @@ dependencies:
   dio_cookie_manager: ^2.0.0
   dio: ^4.0.6
   cookie_jar: ^3.0.1
+  web_socket_channel: ^2.2.0
 
   # Native Api
+  app_links: ^3.2.0
   permission_handler: ^9.2.0
   path_provider: ^2.0.9
+  connectivity_plus: ^2.3.2
 
   # Better DX
   either_dart: ^0.1.4
@@ -48,6 +52,7 @@ dev_dependencies:
   copy_with_extension_gen: ^4.0.1
   build_runner: ^2.1.8
   objectbox_generator: ^1.4.1
+  wakelock: ^0.6.1+2
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -63,6 +68,7 @@ flutter:
   # To add assets to your application, add an assets section, like this:
   assets:
     - assets/images/pieces/
+    - assets/lottie/
   #   - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see

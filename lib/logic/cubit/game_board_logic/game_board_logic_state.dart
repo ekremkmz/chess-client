@@ -13,6 +13,7 @@ class GameBoardLogicInitial extends GameBoardLogicState {
 @CopyWith(copyWithNull: true, skipFields: true)
 class GameBoardLogicGaming extends GameBoardLogicState {
   const GameBoardLogicGaming({
+    required this.gameState,
     required this.whiteNick,
     required this.blackNick,
     required this.whiteTime,
@@ -25,6 +26,8 @@ class GameBoardLogicGaming extends GameBoardLogicState {
     required this.fullMove,
     this.movableLocations,
   });
+
+  final int gameState;
 
   final List<List<ChessPiece?>> board;
 
@@ -54,6 +57,7 @@ class GameBoardLogicGaming extends GameBoardLogicState {
     final black = game.black.target;
 
     return GameBoardLogicGaming(
+      gameState: game.gameState,
       whiteTime: white == null ? null : Duration(milliseconds: white.timeLeft),
       blackTime: black == null ? null : Duration(milliseconds: black.timeLeft),
       board: bs.toBoard(),

@@ -1,7 +1,7 @@
 import 'command.dart';
 
-class GetGameFromServerCommand extends Command {
-  GetGameFromServerCommand({
+class ConnectToGameCommand extends Command {
+  ConnectToGameCommand({
     required this.gameId,
     this.successHandler,
   });
@@ -23,5 +23,5 @@ class GetGameFromServerCommand extends Command {
   }
 
   @override
-  String get commandTag => "getGame";
+  String get commandTag => "connectToGame";
 }

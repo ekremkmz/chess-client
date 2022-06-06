@@ -1,5 +1,5 @@
-import 'package:chess/logic/cubit/game_board_logic/game_board_logic_cubit.dart';
-import 'package:chess/pages/game_page/player_state_widget.dart';
+import '../../logic/cubit/game_board_logic/game_board_logic_cubit.dart';
+import 'player_state_widget.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'game_board_widget.dart';
@@ -17,26 +17,57 @@ class GamePage extends StatelessWidget {
       child: Scaffold(
         body: Column(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Flexible(
-              child: PlayerStateWidget(playerState: cubit.opponent),
-            ),
-            Hero(
-              tag: cubit.gameId,
-              child: BlocProvider.value(
-                value: cubit,
-                child: const AspectRatio(
-                  aspectRatio: 1,
-                  child: GameBoardWidget(),
-                ),
-              ),
-            ),
-            Flexible(
-              child: PlayerStateWidget(playerState: cubit.you),
-            ),
-          ],
+          children: cubit.state is GameBoardLogicGaming
+              ? _buildGame(cubit)
+              : _buildLoading(),
         ),
       ),
     );
+  }
+
+  List<Widget> _buildGame(GameBoardLogicCubit cubit) {
+    final state = (cubit.state as GameBoardLogicGaming);
+
+    final isGameActive = state.gameState == 3;
+
+    final opponent = cubit.opponent;
+    final isOpponentWhite = state.whiteNick == opponent?.nick;
+    final isWhitePlaying = state.turn == PieceColor.white;
+    final isOpponentPlaying = isOpponentWhite == isWhitePlaying;
+
+    return [
+      Flexible(
+        child: PlayerStateWidget(
+          playerState: opponent,
+          timerActive: isGameActive && isOpponentPlaying,
+        ),
+      ),
+      Hero(
+        tag: cubit.gameId,
+        child: BlocProvider.value(
+          value: cubit,
+          child: const AspectRatio(
+            aspectRatio: 1,
+            child: GameBoardWidget(),
+          ),
+        ),
+      ),
+      Flexible(
+        child: PlayerStateWidget(
+          playerState: cubit.you,
+          timerActive: isGameActive && !isOpponentPlaying,
+        ),
+      ),
+    ];
+  }
+
+  List<Widget> _buildLoading() {
+    return const [
+      Expanded(
+        child: Center(
+          child: CircularProgressIndicator(),
+        ),
+      )
+    ];
   }
 }

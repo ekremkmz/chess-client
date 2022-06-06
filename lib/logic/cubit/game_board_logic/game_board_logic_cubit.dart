@@ -1,10 +1,10 @@
 import 'dart:async';
 
-import 'package:chess/data/local/models/player_state.dart';
-import 'package:chess/data/websocket/commands/get_game_from_server_command.dart';
+import '../../../data/local/models/player_state.dart';
+import '../../../data/websocket/commands/connect_to_game_command.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:chess/data/websocket/commands/play_move_command.dart';
-import 'package:chess/data/websocket/socket_manager.dart';
+import '../../../data/websocket/commands/play_move_command.dart';
+import '../../../data/websocket/socket_manager.dart';
 import '../../../data/local/db_manager.dart';
 import '../../../data/local/models/game.dart';
 import 'package:copy_with_extension/copy_with_extension.dart';
@@ -34,7 +34,7 @@ class GameBoardLogicCubit extends Cubit<GameBoardLogicState> {
 
   late StreamSubscription<Game?> streamSub;
 
-  late PieceColor playerColor;
+  PieceColor? playerColor;
 
   void move(ChessCoord source, ChessCoord target) {
     final state = this.state as GameBoardLogicGaming;
@@ -48,31 +48,14 @@ class GameBoardLogicCubit extends Cubit<GameBoardLogicState> {
     board[source.row][source.column] = null;
     board[target.row][target.column]!.move(target);
 
-    // Not persistent yet on the local DB
+    // Not persistent on the local DB yet
     emit(state.copyWith(board: board));
 
     SocketManager.instance.sendCommand(PlayMoveCommand(
       source: source,
       target: target,
-      successHandler: (data) {
-        final game = this.game;
-        final boardRef = board;
-        int timeleft = data!['timeleft'];
-
-        switch (playerColor) {
-          case PieceColor.white:
-            game!.white.target!.timeLeft = timeleft;
-            break;
-          case PieceColor.black:
-            game!.black.target!.timeLeft = timeleft;
-            break;
-          default:
-        }
-
-        game!.boardState.target!.updateBoard(boardRef);
-
-        DBManager.instance.putGame(game);
-      },
+      gameId: gameId,
+      successHandler: playMoveHandler,
     ));
   }
 
@@ -171,26 +154,44 @@ class GameBoardLogicCubit extends Cubit<GameBoardLogicState> {
   */
 
   void _initGame(String gameId) {
+    streamSub = DBManager.instance.getGameAsStream(gameId).listen((game) {
+      if (game == null) return;
+
+      // For connecting to others game
+      if (playerColor == null) {
+        if (game.black.target?.nick == userNick) {
+          playerColor = PieceColor.black;
+        } else if (game.white.target?.nick == userNick) {
+          playerColor = PieceColor.white;
+        }
+      }
+
+      this.game = game;
+
+      emit(GameBoardLogicGaming.fromGame(game));
+    });
+
+    // When connecting to others game
     if (game == null) {
-      SocketManager.instance.sendCommand(GetGameFromServerCommand(
+      SocketManager.instance.sendCommand(
+        ConnectToGameCommand(
           gameId: gameId,
           successHandler: (data) {
-            game = Game.fromJson(data!);
-            //TODO:
-          }));
+            final game = Game.fromJson(data!);
+            DBManager.instance.putGame(game);
+          },
+        ),
+      );
       return;
     }
+
     if (game!.black.target?.nick == userNick) {
       playerColor = PieceColor.black;
     } else if (game!.white.target?.nick == userNick) {
       playerColor = PieceColor.white;
     }
 
-    streamSub = DBManager.instance.getGameAsStream(gameId).listen((game) {
-      this.game = game;
-
-      emit(GameBoardLogicGaming.fromGame(game));
-    });
+    emit(GameBoardLogicGaming.fromGame(game!));
   }
 
   PlayerState? get you {

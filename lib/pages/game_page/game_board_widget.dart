@@ -1,4 +1,4 @@
-import 'package:chess/pages/home_page/tabs/my_games/mini_game_board_widget.dart';
+import '../home_page/tabs/my_games/mini_game_board_widget.dart';
 import 'package:provider/provider.dart';
 
 import '../../logic/cubit/game_board_logic/chess_coord.dart';
@@ -19,7 +19,9 @@ class GameBoardWidget extends StatelessWidget {
       //TODO:ayarlarsın işte
       return Provider.value(
         value: cubit.game,
-        child: const MiniGameBoardWidget(),
+        child: cubit.game != null
+            ? const MiniGameBoardWidget()
+            : _buildWaitingForGame(),
       );
     }
 
@@ -106,6 +108,15 @@ class GameBoardWidget extends StatelessWidget {
                       : null,
         );
       },
+    );
+  }
+
+  Widget _buildWaitingForGame() {
+    return AspectRatio(
+      aspectRatio: 1,
+      child: Expanded(
+        child: Container(),
+      ),
     );
   }
 }

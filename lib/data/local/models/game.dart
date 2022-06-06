@@ -22,12 +22,11 @@ class Game {
 
   late int add;
 
-  @Property(type: PropertyType.dateNano)
-  DateTime? lastPlayed;
+  int? lastPlayed;
 
-  @Property(type: PropertyType.dateNano)
-  DateTime? started;
+  int? started;
 
+  // Undefined: 0, WaitsOpponent: 1, WaitsFirstMove: 2, Playing: 3, Ended: 4
   int gameState = 0;
 
   final boardState = ToOne<BoardState>();
@@ -59,11 +58,11 @@ class Game {
     }
 
     if (data["lastPlayed"] != null) {
-      g.lastPlayed = DateTime.fromMillisecondsSinceEpoch(data["lastPlayed"]);
+      g.lastPlayed = data["lastPlayed"];
     }
 
     if (data["started"] != null) {
-      g.started = DateTime.fromMillisecondsSinceEpoch(data["started"]);
+      g.started = data["started"];
     }
 
     return g;

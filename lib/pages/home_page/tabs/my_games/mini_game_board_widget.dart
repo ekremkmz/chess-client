@@ -1,6 +1,6 @@
-import 'package:chess/data/local/models/game.dart';
-import 'package:chess/data/local/models/user.dart';
-import 'package:chess/logic/cubit/game_board_logic/chess_piece/chess_piece.dart';
+import '../../../../data/local/models/game.dart';
+import '../../../../data/local/models/user.dart';
+import '../../../../logic/cubit/game_board_logic/chess_piece/chess_piece.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 

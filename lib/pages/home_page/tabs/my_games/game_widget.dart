@@ -1,4 +1,4 @@
-import 'package:chess/pages/home_page/tabs/my_games/mini_game_board_widget.dart';
+import 'mini_game_board_widget.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
 
@@ -12,7 +12,7 @@ class GameWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final game = context.read<Game>();
+    final game = context.watch<Game>();
     final size = MediaQuery.of(context).size;
     return Card(
       child: Row(

@@ -2,6 +2,7 @@ enum FailureKey {
   unknown,
   requestFailure,
   storagePermissionDenied,
+  socketConnectionError,
 }
 
 class Failure {

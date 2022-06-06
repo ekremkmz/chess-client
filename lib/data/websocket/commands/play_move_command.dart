@@ -1,11 +1,13 @@
-import 'package:chess/data/websocket/commands/command.dart';
-import 'package:chess/logic/cubit/game_board_logic/chess_coord.dart';
+import 'command.dart';
+import '../../../logic/cubit/game_board_logic/chess_coord.dart';
 
 class PlayMoveCommand extends Command {
+  final String gameId;
   final ChessCoord source;
   final ChessCoord target;
 
   PlayMoveCommand({
+    required this.gameId,
     required this.source,
     required this.target,
     this.successHandler,
@@ -23,6 +25,7 @@ class PlayMoveCommand extends Command {
       "command": commandTag,
       "commandId": commandId,
       "params": {
+        "gameId": gameId,
         "source": source.toString(),
         "target": target.toString(),
       },

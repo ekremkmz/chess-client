@@ -1,4 +1,7 @@
-import 'package:chess/data/local/models/player_state.dart';
+import 'package:chess/logic/cubit/game_board_logic/game_board_logic_cubit.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+import '../../data/local/models/player_state.dart';
 import 'package:flutter/material.dart';
 
 import 'timer_widget.dart';
@@ -7,12 +10,16 @@ class PlayerStateWidget extends StatelessWidget {
   const PlayerStateWidget({
     this.playerState,
     Key? key,
+    required this.timerActive,
   }) : super(key: key);
 
   final PlayerState? playerState;
 
+  final bool timerActive;
+
   @override
   Widget build(BuildContext context) {
+    final cubit = context.read<GameBoardLogicCubit>();
     return FractionallySizedBox(
       heightFactor: 0.5,
       child: Container(
@@ -28,7 +35,11 @@ class PlayerStateWidget extends StatelessWidget {
               ),
             ),
             Flexible(
-              child: TimerWidget(time: playerState?.timeLeft ?? 0),
+              child: TimerWidget(
+                active: timerActive,
+                lastPlayed: cubit.game!.lastPlayed,
+                time: playerState?.timeLeft ?? 0,
+              ),
             ),
           ],
         ),

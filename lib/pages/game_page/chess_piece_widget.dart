@@ -1,8 +1,9 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
 import '../../logic/cubit/game_board_logic/chess_coord.dart';
 import '../../logic/cubit/game_board_logic/chess_piece/chess_piece.dart';
 import '../../logic/cubit/game_board_logic/game_board_logic_cubit.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 
 class ChessPieceWidget extends StatelessWidget {
   const ChessPieceWidget({
