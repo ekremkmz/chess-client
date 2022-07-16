@@ -1,5 +1,12 @@
 import 'dart:async';
 
+import 'package:chess/data/websocket/commands/send_response_to_draw_offer.dart';
+import 'package:chess/data/websocket/commands/offer_draw_command.dart';
+import 'package:chess/data/websocket/commands/resign_command.dart';
+import 'package:chess/helper/fen_logic.dart';
+import 'package:chess/helper/move_helper.dart';
+import 'package:get_it/get_it.dart';
+
 import '../../../data/local/models/player_state.dart';
 import '../../../data/websocket/commands/connect_to_game_command.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -10,9 +17,12 @@ import '../../../data/local/models/game.dart';
 import 'package:copy_with_extension/copy_with_extension.dart';
 import 'package:flutter/material.dart';
 
+import 'castle_side.dart';
 import 'chess_coord.dart';
 import 'chess_piece/chess_piece.dart';
 import 'chess_piece/king_piece.dart';
+import 'chess_piece/pawn_piece.dart';
+import 'piece_color.dart';
 
 part 'game_board_logic_state.dart';
 part 'game_board_logic_state.g.dart';
@@ -36,22 +46,29 @@ class GameBoardLogicCubit extends Cubit<GameBoardLogicState> {
 
   PieceColor? playerColor;
 
-  void move(ChessCoord source, ChessCoord target) {
+  void move(ChessCoord source, ChessCoord target, String? promote) {
     final state = this.state as GameBoardLogicGaming;
 
-    // Make a copy for immutability
-    final board = state.board
-        .map((e) => e.toList(growable: false))
-        .toList(growable: false);
+    final board = state.board;
+    final castlingRights = state.castleSide;
+    final enPassant = state.enPassant;
 
-    board[target.row][target.column] = board[source.row][source.column];
-    board[source.row][source.column] = null;
-    board[target.row][target.column]!.move(target);
+    final move = MoveLogic(
+      promote: promote,
+      enPassant: enPassant,
+      board: board,
+      target: target,
+      source: source,
+      castlingRights: castlingRights,
+      playerColor: playerColor!,
+    )..makeMove(simulate: true);
 
-    // Not persistent on the local DB yet
-    emit(state.copyWith(board: board));
+    // Not persistent on the local DB yet just visual. The consequences
+    // of this move are going to be set on the success handler
+    emit(state.copyWith(board: move.board));
 
-    SocketManager.instance.sendCommand(PlayMoveCommand(
+    GetIt.I<SocketManager>().sendCommand(PlayMoveCommand(
+      promote: promote,
       source: source,
       target: target,
       gameId: gameId,
@@ -64,8 +81,19 @@ class GameBoardLogicCubit extends Cubit<GameBoardLogicState> {
 
     final piece = state.board[source.row][source.column];
 
-    final movableLocations =
-        piece!.calculateMovableLocations(state.board, state.enPassant);
+    final movableLocations = piece!.calculateMovableLocations(state.board);
+    if (piece is KingPiece) {
+      piece.calculateCastlableLocations(
+        state.board,
+        movableLocations,
+        state.castleSide,
+      );
+    } else if (piece is PawnPiece) {
+      piece.calculateEnPassantLocations(
+        movableLocations,
+        state.enPassant,
+      );
+    }
 
     emit(state.copyWith(movableLocations: movableLocations));
   }
@@ -76,16 +104,53 @@ class GameBoardLogicCubit extends Cubit<GameBoardLogicState> {
     emit(state.copyWith(movableLocations: null));
   }
 
+  void offerDraw() {
+    GetIt.I<SocketManager>().sendCommand(DrawOfferCommand(
+      gameId: gameId,
+      successHandler: drawOfferHandler,
+    ));
+  }
+
+  void acceptDrawOffer() {
+    GetIt.I<SocketManager>().sendCommand(SendResponseToDrawOfferCommand(
+      gameId: gameId,
+      response: true,
+      successHandler: sendResponseToDrawOfferHandler,
+    ));
+  }
+
+  void declineDrawOffer() {
+    GetIt.I<SocketManager>().sendCommand(SendResponseToDrawOfferCommand(
+      gameId: gameId,
+      response: false,
+      successHandler: sendResponseToDrawOfferHandler,
+    ));
+  }
+
+  void resign() {
+    GetIt.I<SocketManager>().sendCommand(ResignCommand(
+      gameId: gameId,
+      successHandler: resignHandler,
+    ));
+  }
+
   // Checks if your king is a target after the move
   bool canMove(ChessCoord source, ChessCoord target) {
     final state = this.state as GameBoardLogicGaming;
-    // Deep copy board
-    final board = state.board
-        .map((e) => e.toList(growable: false))
-        .toList(growable: false);
 
-    board[target.row][target.column] = board[source.row][source.column];
-    board[source.row][source.column] = null;
+    // Deep copying because we dont want to make modification on state
+    final board = charsToChessPieceList(chessPieceListToChars(state.board));
+    final castlingRights = state.castleSide.toSet();
+    final enPassant = state.enPassant;
+
+    MoveLogic(
+      enPassant: enPassant,
+      board: board,
+      target: target,
+      source: source,
+      castlingRights: castlingRights,
+      playerColor: playerColor!,
+    ).makeMove(simulate: true);
 
     // Find your king
     late ChessCoord kc;
@@ -94,7 +159,7 @@ class GameBoardLogicCubit extends Cubit<GameBoardLogicState> {
       for (int j = 0; j < row.length; j++) {
         var piece = row[j];
         if (piece is KingPiece && piece.color == playerColor) {
-          kc = ChessCoord(row: i, column: j);
+          kc = piece.coord;
         }
       }
     }
@@ -102,8 +167,8 @@ class GameBoardLogicCubit extends Cubit<GameBoardLogicState> {
     // Check if your king is capturable
     for (var row in board) {
       for (var piece in row) {
-        if (piece != null) {
-          final ml = piece.calculateMovableLocations(board, null);
+        if (piece != null && piece.color != playerColor) {
+          final ml = piece.calculateMovableLocations(board);
           if (ml[kc.row][kc.column]) return false;
         }
       }
@@ -111,60 +176,12 @@ class GameBoardLogicCubit extends Cubit<GameBoardLogicState> {
     return true;
   }
 
-  /*
-  void newGame(Duration timeControl, Duration adder, [PieceColor? color]) {
-    playerColor =
-        color ?? (Random().nextBool() ? PieceColor.white : PieceColor.black);
-
-    fromFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
-        timeControl, adder);
-  }
-
-  void fromFEN(String fen, Duration timeControl, Duration adder) {
-    final list = fen.split(" ");
-
-    final board = charsToChessPieceList(list[0]);
-
-    final turn = list[1] == "b" ? PieceColor.black : PieceColor.white;
-
-    final castleSide = charsToCastleSide(list[2]);
-
-    final enPassant = list[3] == "-"
-        ? null
-        : ChessCoord(
-            row: coordsToInt[list[3][0]]!,
-            column: int.parse(list[3][1]),
-          );
-
-    final halfMove = int.parse(list[4]);
-
-    final fullMove = int.parse(list[5]);
-
-    emit(GameBoardLogicGaming(
-      whiteTime: timeControl,
-      blackTime: timeControl,
-      board: board,
-      turn: turn,
-      castleSide: castleSide,
-      enPassant: enPassant,
-      halfMove: halfMove,
-      fullMove: fullMove,
-    ));
-  }
-  */
-
   void _initGame(String gameId) {
-    streamSub = DBManager.instance.getGameAsStream(gameId).listen((game) {
+    streamSub = GetIt.I<DBManager>().getGameAsStream(gameId).listen((game) {
       if (game == null) return;
 
-      // For connecting to others game
-      if (playerColor == null) {
-        if (game.black.target?.nick == userNick) {
-          playerColor = PieceColor.black;
-        } else if (game.white.target?.nick == userNick) {
-          playerColor = PieceColor.white;
-        }
-      }
+      playerColor ??=
+          game.playerColor == 0 ? PieceColor.white : PieceColor.black;
 
       this.game = game;
 
@@ -173,12 +190,12 @@ class GameBoardLogicCubit extends Cubit<GameBoardLogicState> {
 
     // When connecting to others game
     if (game == null) {
-      SocketManager.instance.sendCommand(
+      GetIt.I<SocketManager>().sendCommand(
         ConnectToGameCommand(
           gameId: gameId,
           successHandler: (data) {
             final game = Game.fromJson(data!);
-            DBManager.instance.putGame(game);
+            GetIt.I<DBManager>().putGame(game);
           },
         ),
       );
@@ -218,6 +235,10 @@ class GameBoardLogicCubit extends Cubit<GameBoardLogicState> {
 
   @override
   Future<void> close() async {
+    if (game != null) {
+      game!.notify = false;
+      GetIt.I<DBManager>().putGame(game!);
+    }
     await streamSub.cancel();
     await super.close();
   }

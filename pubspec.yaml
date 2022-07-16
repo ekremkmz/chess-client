@@ -13,12 +13,14 @@ dependencies:
     sdk: flutter
 
   # Widgets
-  stop_watch_timer: ^1.4.0
   lottie: ^1.3.0
 
   # State management
   provider: ^6.0.2
   flutter_bloc: ^8.0.1
+
+  # Service Locator
+  get_it: ^7.2.0
 
   # Database
   objectbox: ^1.4.1
@@ -39,10 +41,10 @@ dependencies:
   app_links: ^3.2.0
   permission_handler: ^9.2.0
   path_provider: ^2.0.9
-  connectivity_plus: ^2.3.2
 
   # Better DX
   either_dart: ^0.1.4
+  shared_preferences: ^2.0.15
 
 dev_dependencies:
   flutter_test:

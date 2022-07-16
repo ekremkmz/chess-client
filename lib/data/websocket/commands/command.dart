@@ -1,11 +1,18 @@
 import 'package:uuid/uuid.dart';
 
-typedef SuccessHandlerCallback = void Function(Map<String, dynamic>? data);
+typedef CommandResponseHandler = void Function(dynamic data);
 
 abstract class Command {
+  Command({
+    this.successHandler,
+    this.errorHandler,
+  });
+
   final String commandId = const Uuid().v1();
 
-  SuccessHandlerCallback? get successHandler;
+  CommandResponseHandler? successHandler;
+
+  CommandResponseHandler? errorHandler;
 
   String get commandTag;
 

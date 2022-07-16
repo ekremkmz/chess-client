@@ -3,13 +3,13 @@ import 'command.dart';
 class ConnectToGameCommand extends Command {
   ConnectToGameCommand({
     required this.gameId,
-    this.successHandler,
+    super.successHandler,
   });
 
   String gameId;
 
   @override
-  SuccessHandlerCallback? successHandler;
+  String get commandTag => "connectToGame";
 
   @override
   Map<String, dynamic> toMap() {
@@ -21,7 +21,4 @@ class ConnectToGameCommand extends Command {
       },
     };
   }
-
-  @override
-  String get commandTag => "connectToGame";
 }

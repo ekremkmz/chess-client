@@ -13,6 +13,7 @@ class GameBoardLogicInitial extends GameBoardLogicState {
 @CopyWith(copyWithNull: true, skipFields: true)
 class GameBoardLogicGaming extends GameBoardLogicState {
   const GameBoardLogicGaming({
+    required this.special,
     required this.gameState,
     required this.whiteNick,
     required this.blackNick,
@@ -51,6 +52,8 @@ class GameBoardLogicGaming extends GameBoardLogicState {
 
   final List<List<bool>>? movableLocations;
 
+  final String? special;
+
   factory GameBoardLogicGaming.fromGame(Game game) {
     final bs = game.boardState.target!;
     final white = game.white.target;
@@ -62,40 +65,14 @@ class GameBoardLogicGaming extends GameBoardLogicState {
       blackTime: black == null ? null : Duration(milliseconds: black.timeLeft),
       board: bs.toBoard(),
       turn: bs.turn == 0 ? PieceColor.white : PieceColor.black,
-      castleSide: bs.toCastleSideSet(),
+      castleSide: bs.toCastleSide(),
       enPassant:
           bs.enPassant == null ? null : ChessCoord.fromString(bs.enPassant!),
       halfMove: 0,
       fullMove: 0,
       whiteNick: white?.nick,
       blackNick: black?.nick,
+      special: game.special,
     );
   }
-}
-
-enum CastleSide {
-  whiteKingSide,
-  whiteQueenSide,
-  blackKingSide,
-  blackQueenSide,
-}
-
-CastleSide stringToCastleSide(String castleSide) {
-  switch (castleSide) {
-    case "K":
-      return CastleSide.whiteKingSide;
-    case "Q":
-      return CastleSide.whiteQueenSide;
-    case "k":
-      return CastleSide.blackKingSide;
-    case "q":
-      return CastleSide.blackQueenSide;
-    default:
-      throw ArgumentError("Invalid castle side: $castleSide");
-  }
-}
-
-enum PieceColor {
-  white,
-  black,
 }

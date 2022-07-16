@@ -23,7 +23,7 @@ final _entities = <ModelEntity>[
   ModelEntity(
       id: const IdUid(1, 5376661069704407421),
       name: 'Game',
-      lastPropertyId: const IdUid(10, 2623725884273394636),
+      lastPropertyId: const IdUid(17, 4652124383061883954),
       flags: 0,
       properties: <ModelProperty>[
         ModelProperty(
@@ -44,11 +44,6 @@ final _entities = <ModelEntity>[
         ModelProperty(
             id: const IdUid(4, 3836837350238356084),
             name: 'lastPlayed',
-            type: 6,
-            flags: 0),
-        ModelProperty(
-            id: const IdUid(5, 5646228821341533188),
-            name: 'started',
             type: 6,
             flags: 0),
         ModelProperty(
@@ -82,7 +77,37 @@ final _entities = <ModelEntity>[
             type: 11,
             flags: 520,
             indexId: const IdUid(3, 3437129481656225446),
-            relationTarget: 'BoardState')
+            relationTarget: 'BoardState'),
+        ModelProperty(
+            id: const IdUid(12, 3800654175661735230),
+            name: 'notify',
+            type: 1,
+            flags: 0),
+        ModelProperty(
+            id: const IdUid(13, 7336297141357681111),
+            name: 'playerColor',
+            type: 6,
+            flags: 0),
+        ModelProperty(
+            id: const IdUid(14, 3474294286524830998),
+            name: 'special',
+            type: 9,
+            flags: 0),
+        ModelProperty(
+            id: const IdUid(15, 5898781711563000204),
+            name: 'createdAt',
+            type: 6,
+            flags: 0),
+        ModelProperty(
+            id: const IdUid(16, 2510562213758790756),
+            name: 'winner',
+            type: 6,
+            flags: 0),
+        ModelProperty(
+            id: const IdUid(17, 4652124383061883954),
+            name: 'drawRequestFrom',
+            type: 9,
+            flags: 0)
       ],
       relations: <ModelRelation>[],
       backlinks: <ModelBacklink>[]),
@@ -186,7 +211,9 @@ ModelDefinition getObjectBoxModel() {
         5392970803299894319,
         1548970870397139836,
         3883704058047103362,
-        4866237985086350014
+        4866237985086350014,
+        927814009245362800,
+        5646228821341533188
       ],
       retiredRelationUids: const [],
       modelVersion: 5,
@@ -205,17 +232,27 @@ ModelDefinition getObjectBoxModel() {
         },
         objectToFB: (Game object, fb.Builder fbb) {
           final uidOffset = fbb.writeString(object.uid);
-          fbb.startTable(11);
+          final specialOffset =
+              object.special == null ? null : fbb.writeString(object.special!);
+          final drawRequestFromOffset = object.drawRequestFrom == null
+              ? null
+              : fbb.writeString(object.drawRequestFrom!);
+          fbb.startTable(18);
           fbb.addInt64(0, object.id);
           fbb.addInt64(1, object.time);
           fbb.addInt64(2, object.add);
           fbb.addInt64(3, object.lastPlayed);
-          fbb.addInt64(4, object.started);
           fbb.addInt64(5, object.gameState);
           fbb.addInt64(6, object.white.targetId);
           fbb.addInt64(7, object.black.targetId);
           fbb.addOffset(8, uidOffset);
           fbb.addInt64(9, object.boardState.targetId);
+          fbb.addBool(11, object.notify);
+          fbb.addInt64(12, object.playerColor);
+          fbb.addOffset(13, specialOffset);
+          fbb.addInt64(14, object.createdAt);
+          fbb.addInt64(15, object.winner);
+          fbb.addOffset(16, drawRequestFromOffset);
           fbb.finish(fbb.endTable());
           return object.id;
         },
@@ -229,12 +266,22 @@ ModelDefinition getObjectBoxModel() {
             ..add = const fb.Int64Reader().vTableGet(buffer, rootOffset, 8, 0)
             ..lastPlayed =
                 const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 10)
-            ..started =
-                const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 12)
             ..gameState =
                 const fb.Int64Reader().vTableGet(buffer, rootOffset, 14, 0)
             ..uid = const fb.StringReader(asciiOptimization: true)
-                .vTableGet(buffer, rootOffset, 20, '');
+                .vTableGet(buffer, rootOffset, 20, '')
+            ..notify =
+                const fb.BoolReader().vTableGet(buffer, rootOffset, 26, false)
+            ..playerColor =
+                const fb.Int64Reader().vTableGet(buffer, rootOffset, 28, 0)
+            ..special = const fb.StringReader(asciiOptimization: true)
+                .vTableGetNullable(buffer, rootOffset, 30)
+            ..createdAt =
+                const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 32)
+            ..winner =
+                const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 34)
+            ..drawRequestFrom = const fb.StringReader(asciiOptimization: true)
+                .vTableGetNullable(buffer, rootOffset, 36);
           object.white.targetId =
               const fb.Int64Reader().vTableGet(buffer, rootOffset, 16, 0);
           object.white.attach(store);
@@ -341,27 +388,45 @@ class Game_ {
   static final lastPlayed =
       QueryIntegerProperty<Game>(_entities[0].properties[3]);
 
-  /// see [Game.started]
-  static final started = QueryIntegerProperty<Game>(_entities[0].properties[4]);
-
   /// see [Game.gameState]
   static final gameState =
-      QueryIntegerProperty<Game>(_entities[0].properties[5]);
+      QueryIntegerProperty<Game>(_entities[0].properties[4]);
 
   /// see [Game.white]
   static final white =
-      QueryRelationToOne<Game, PlayerState>(_entities[0].properties[6]);
+      QueryRelationToOne<Game, PlayerState>(_entities[0].properties[5]);
 
   /// see [Game.black]
   static final black =
-      QueryRelationToOne<Game, PlayerState>(_entities[0].properties[7]);
+      QueryRelationToOne<Game, PlayerState>(_entities[0].properties[6]);
 
   /// see [Game.uid]
-  static final uid = QueryStringProperty<Game>(_entities[0].properties[8]);
+  static final uid = QueryStringProperty<Game>(_entities[0].properties[7]);
 
   /// see [Game.boardState]
   static final boardState =
-      QueryRelationToOne<Game, BoardState>(_entities[0].properties[9]);
+      QueryRelationToOne<Game, BoardState>(_entities[0].properties[8]);
+
+  /// see [Game.notify]
+  static final notify = QueryBooleanProperty<Game>(_entities[0].properties[9]);
+
+  /// see [Game.playerColor]
+  static final playerColor =
+      QueryIntegerProperty<Game>(_entities[0].properties[10]);
+
+  /// see [Game.special]
+  static final special = QueryStringProperty<Game>(_entities[0].properties[11]);
+
+  /// see [Game.createdAt]
+  static final createdAt =
+      QueryIntegerProperty<Game>(_entities[0].properties[12]);
+
+  /// see [Game.winner]
+  static final winner = QueryIntegerProperty<Game>(_entities[0].properties[13]);
+
+  /// see [Game.drawRequestFrom]
+  static final drawRequestFrom =
+      QueryStringProperty<Game>(_entities[0].properties[14]);
 }
 
 /// [PlayerState] entity fields to define ObjectBox queries.

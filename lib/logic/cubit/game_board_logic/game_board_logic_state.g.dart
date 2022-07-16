@@ -23,6 +23,7 @@ abstract class _$GameBoardLogicGamingCWProxy {
     int? gameState,
     int? halfMove,
     List<List<bool>>? movableLocations,
+    String? special,
     PieceColor? turn,
     String? whiteNick,
     Duration? whiteTime,
@@ -54,6 +55,7 @@ class _$GameBoardLogicGamingCWProxyImpl
     Object? gameState = const $CopyWithPlaceholder(),
     Object? halfMove = const $CopyWithPlaceholder(),
     Object? movableLocations = const $CopyWithPlaceholder(),
+    Object? special = const $CopyWithPlaceholder(),
     Object? turn = const $CopyWithPlaceholder(),
     Object? whiteNick = const $CopyWithPlaceholder(),
     Object? whiteTime = const $CopyWithPlaceholder(),
@@ -96,6 +98,10 @@ class _$GameBoardLogicGamingCWProxyImpl
           ? _value.movableLocations
           // ignore: cast_nullable_to_non_nullable
           : movableLocations as List<List<bool>>?,
+      special: special == const $CopyWithPlaceholder()
+          ? _value.special
+          // ignore: cast_nullable_to_non_nullable
+          : special as String?,
       turn: turn == const $CopyWithPlaceholder() || turn == null
           ? _value.turn
           // ignore: cast_nullable_to_non_nullable
@@ -113,7 +119,7 @@ class _$GameBoardLogicGamingCWProxyImpl
 }
 
 extension $GameBoardLogicGamingCopyWith on GameBoardLogicGaming {
-  /// Returns a callable class that can be used as follows: `instanceOfclass GameBoardLogicGaming extends GameBoardLogicState.name.copyWith(...)`.
+  /// Returns a callable class that can be used as follows: `instanceOfGameBoardLogicGaming.copyWith(...)`.
   _$GameBoardLogicGamingCWProxy get copyWith =>
       _$GameBoardLogicGamingCWProxyImpl(this);
 
@@ -128,6 +134,7 @@ extension $GameBoardLogicGamingCopyWith on GameBoardLogicGaming {
     bool blackTime = false,
     bool enPassant = false,
     bool movableLocations = false,
+    bool special = false,
     bool whiteNick = false,
     bool whiteTime = false,
   }) {
@@ -141,6 +148,7 @@ extension $GameBoardLogicGamingCopyWith on GameBoardLogicGaming {
       gameState: gameState,
       halfMove: halfMove,
       movableLocations: movableLocations == true ? null : this.movableLocations,
+      special: special == true ? null : this.special,
       turn: turn,
       whiteNick: whiteNick == true ? null : this.whiteNick,
       whiteTime: whiteTime == true ? null : this.whiteTime,

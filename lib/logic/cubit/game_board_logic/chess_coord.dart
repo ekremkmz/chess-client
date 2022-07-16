@@ -9,8 +9,8 @@ class ChessCoord with EquatableMixin {
   });
 
   factory ChessCoord.fromString(String str) => ChessCoord(
-        column: coordsToInt[str[0]]! - 1,
         row: 8 - int.parse(str[1]),
+        column: coordsToInt[str[0]]! - 1,
       );
 
   // [0 - 7]

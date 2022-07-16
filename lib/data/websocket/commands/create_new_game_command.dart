@@ -5,15 +5,17 @@ class CreateNewGameCommand extends Command {
     required this.time,
     required this.add,
     this.color,
-    this.successHandler,
+    this.friend,
+    super.successHandler,
   });
 
   int time;
   int add;
   String? color;
+  String? friend;
 
   @override
-  SuccessHandlerCallback? successHandler;
+  String get commandTag => "createNewGame";
 
   @override
   Map<String, dynamic> toMap() {
@@ -21,13 +23,11 @@ class CreateNewGameCommand extends Command {
       "command": commandTag,
       "commandId": commandId,
       "params": {
-        "time": time.toString(),
-        "add": add.toString(),
+        "time": time,
+        "add": add,
         if (color != null) "color": color,
+        if (friend != null) "friend": friend,
       },
     };
   }
-
-  @override
-  String get commandTag => "createNewGame";
 }

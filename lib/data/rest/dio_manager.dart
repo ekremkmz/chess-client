@@ -6,17 +6,15 @@ import 'package:permission_handler/permission_handler.dart';
 
 import '../../errors/failure.dart';
 import '../globals.dart';
-import '../local/models/user.dart';
+import '../runtime/user_manager.dart';
+import 'api_error_wrapper.dart';
 
 class DioManager {
-  const DioManager._();
+  DioManager();
 
-  static DioManager? _instance;
-  static DioManager get instance => _instance ??= const DioManager._();
+  late d.Dio _dioInstance;
 
-  static late d.Dio _dioInstance;
-
-  static void init() {
+  DioManager init() {
     _dioInstance = d.Dio();
     _dioInstance.options.baseUrl = Globals.restUrl;
     final cookieManager = CookieManager(
@@ -25,6 +23,7 @@ class DioManager {
       ),
     );
     _dioInstance.interceptors.add(cookieManager);
+    return this;
   }
 
   Future<Either<Failure, void>> logout() async {
@@ -34,27 +33,28 @@ class DioManager {
       return Left(failure);
     }
 
-    return _apiErrorWrapper(() async {
+    return apiErrorWrapper(() async {
       await _dioInstance.get('/auth/logout');
       return const Right(null);
     });
   }
 
-  Future<Either<Failure, User>> login(String username, String password) async {
+  Future<Either<Failure, UserManager>> login(
+      String username, String password) async {
     final failure = await _checkStoragePermission();
 
     if (failure != null) {
       return Left(failure);
     }
 
-    return _apiErrorWrapper<User>(() async {
+    return apiErrorWrapper<UserManager>(() async {
       final response = await _dioInstance.post('/auth/login', data: {
         'nick': username,
         'password': password,
       });
 
       if (response.data["success"]) {
-        return Right(User.fromJson(
+        return Right(UserManager.fromJson(
           response.data["data"],
         ));
       } else {
@@ -66,18 +66,18 @@ class DioManager {
     });
   }
 
-  Future<Either<Failure, User>> getProfile() async {
+  Future<Either<Failure, UserManager>> getProfile() async {
     final failure = await _checkStoragePermission();
 
     if (failure != null) {
       return Left(failure);
     }
 
-    return _apiErrorWrapper<User>(() async {
+    return apiErrorWrapper<UserManager>(() async {
       final response = await _dioInstance.get('/profile');
 
       if (response.data["success"]) {
-        return Right(User.fromJson(
+        return Right(UserManager.fromJson(
           response.data["data"],
         ));
       } else {
@@ -103,28 +103,4 @@ Future<Failure?> _checkStoragePermission() async {
     }
   }
   return null;
-}
-
-Future<Either<Failure, T>> _apiErrorWrapper<T>(
-  Future<Either<Failure, T>> Function() fn,
-) async {
-  try {
-    return await fn();
-  } on d.DioError catch (e) {
-    if (e.type == d.DioErrorType.response) {
-      return Left(Failure(
-        key: FailureKey.requestFailure,
-        message: e.response!.data["message"],
-      ));
-    }
-    return const Left(Failure(
-      key: FailureKey.unknown,
-      message: 'Unknown error',
-    ));
-  } on Exception {
-    return const Left(Failure(
-      key: FailureKey.unknown,
-      message: 'Unknown error',
-    ));
-  }
 }

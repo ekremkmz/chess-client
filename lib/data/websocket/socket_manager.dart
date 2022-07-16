@@ -1,10 +1,21 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:developer';
 import 'dart:io';
 
-import 'package:chess/data/local/models/game.dart';
-import 'package:chess/data/local/models/player_state.dart';
+import 'package:chess/helper/move_helper.dart';
+import 'package:chess/logic/cubit/game_board_logic/piece_color.dart';
+
+import '../runtime/user_manager.dart';
+
+import '../runtime/game_requests_manager.dart';
+import '../runtime/friend_status_manager.dart';
+import '../../models/friend.dart';
+import 'package:get_it/get_it.dart';
+
+import '../local/models/game.dart';
+import '../local/models/player_state.dart';
+import 'commands/check_all_status_command.dart';
+import '../../models/game_request.dart';
 
 import '../../errors/failure.dart';
 import '../../logic/cubit/game_board_logic/chess_coord.dart';
@@ -21,21 +32,15 @@ import 'commands/command.dart';
 import 'commands/connect_to_game_command.dart';
 
 class SocketManager {
-  SocketManager._();
-  static SocketManager? _instance;
-
-  static SocketManager get instance {
-    _instance ??= SocketManager._();
-    return _instance!;
-  }
+  SocketManager();
 
   final StreamController<ConnectionState> _connectionStateController =
-      StreamController()..add(ConnectionState.none);
+      StreamController()..add(ConnectionState.done);
 
   Stream<ConnectionState> get connectionStateStream =>
       _connectionStateController.stream;
 
-  ConnectionState _connectionState = ConnectionState.none;
+  ConnectionState _connectionState = ConnectionState.done;
 
   ConnectionState get _state => _connectionState;
   set _state(ConnectionState state) {
@@ -47,20 +52,20 @@ class SocketManager {
   StreamSubscription<dynamic>? _subscription;
 
   bool _initLocked = false;
-  int connectionAttempts = 0;
-  Map<String, Command> waitingAck = {};
-  Map<String, Command> waitingSuccess = {};
-  List<Command> waitingInitQueue = [];
+  int _connectionAttempts = 0;
+  final Map<String, Command> _waitingAck = {};
+  final Map<String, Command> _waitingSuccess = {};
+  final List<Command> _waitingInitQueue = [];
 
   Future<void> initSocket() async {
-    if (_initLocked) return;
+    if (_initLocked || _state == ConnectionState.none) return;
     _initLocked = true;
     await _initSocket();
   }
 
   Future<void> _initSocket() async {
     await dispose();
-    connectionAttempts++;
+    _connectionAttempts++;
     _state = ConnectionState.waiting;
 
     final cookies = await PersistCookieJar(
@@ -71,7 +76,7 @@ class SocketManager {
 
     if (res.isLeft) {
       _initLocked = false;
-      if (connectionAttempts >= 5) {
+      if (_connectionAttempts >= 5) {
         _state = ConnectionState.none;
         return;
       }
@@ -92,24 +97,31 @@ class SocketManager {
     );
     _initLocked = false;
     _state = ConnectionState.active;
-    connectionAttempts = 0;
+    _connectionAttempts = 0;
 
     // Reconnection for games which not ended yet
-    reconnectToAllGames();
+    _reconnectToAllGames();
+
+    _recheckAllStatus();
 
     // Send waiting commands
-    waitingInitQueue.forEach(sendCommand);
-    waitingInitQueue.clear();
+    _waitingInitQueue.forEach(sendCommand);
+    _waitingInitQueue.clear();
   }
 
   void reconnect() async {
-    connectionAttempts = 0;
+    _state = ConnectionState.done;
+    _connectionAttempts = 0;
+    GetIt.I<PlayerStatusManager>().clearData();
     initSocket();
   }
 
   bool sendCommand(Command command) {
     if (_state != ConnectionState.active) {
-      waitingInitQueue.add(command);
+      _waitingInitQueue.add(command);
+      if (_state == ConnectionState.none) {
+        initSocket();
+      }
       return false;
     }
     _addToWaitingAck(command);
@@ -120,19 +132,32 @@ class SocketManager {
     return true;
   }
 
-  void reconnectToAllGames() {
-    final games = DBManager.instance.getAllNotEndedGames();
+  void _reconnectToAllGames() {
+    final games = GetIt.I<DBManager>().getAllNotEndedGames();
     for (var game in games) {
-      SocketManager.instance.sendCommand(
+      final gameBoard = game.boardState.target!.board;
+      sendCommand(
         ConnectToGameCommand(
           gameId: game.uid,
           successHandler: (data) {
             final newGameData = Game.fromJson(data!);
-            DBManager.instance.putGame(newGameData);
+            // If board state is changed when we are not online, we need to
+            // set notify to true
+            final notify = gameBoard != newGameData.boardState.target!.board;
+            newGameData.notify = notify;
+            GetIt.I<DBManager>().putGame(newGameData);
           },
         ),
       );
     }
+  }
+
+  void _recheckAllStatus() {
+    final nicks = GetIt.I<UserManager>().friends.value;
+    sendCommand(CheckAllStatusCommand(
+      nicks: nicks,
+      successHandler: checkAllStatusesHandler,
+    ));
   }
 
   void _eventHandler(dynamic event) {
@@ -149,53 +174,65 @@ class SocketManager {
         _handleSuccess(data);
         break;
       case "playMove":
-        final params = data["data"];
-        playMoveHandler(params);
+        final params = data["params"];
+        playMoveHandler(params, true);
         break;
       case "connectToGame":
-        final params = data["data"];
-
-        final game = DBManager.instance.getGame(params["gameId"])!;
-
-        final playerState = params["playerState"];
-
-        if (playerState != null) {
-          final ps = PlayerState.fromJson(playerState);
-          game.white.target ??= ps;
-          game.black.target ??= ps;
-          game.gameState = 2;
-        } else {
-          //TODO:add observer to game
-        }
-
-        DBManager.instance.putGame(game);
+        final params = data["params"];
+        _connectToGameHandler(params);
+        break;
+      case "statusUpdate":
+        final params = data["params"];
+        _statusUpdateHandler(params);
+        break;
+      case "gameRequest":
+        final params = data["params"];
+        _gameRequestHandler(params);
+        break;
+      case "endGame":
+        final params = data["params"];
+        _endGameHandler(params);
+        break;
+      case "drawOffer":
+        final params = data["params"];
+        drawOfferHandler(params);
+        break;
+      case "sendResponseToDrawOffer":
+        final params = data["params"];
+        sendResponseToDrawOfferHandler(params);
+        break;
+      case "resign":
+        final params = data["params"];
+        resignHandler(params);
         break;
       default:
     }
   }
 
   void _addToWaitingAck(Command command) {
-    waitingAck[command.commandId] = command;
+    _waitingAck[command.commandId] = command;
   }
 
   void _addToWaitingSuccess(String commandId) {
-    final value = waitingAck.remove(commandId);
+    final value = _waitingAck.remove(commandId);
     if (value == null) return;
-    waitingSuccess[commandId] = value;
+    _waitingSuccess[commandId] = value;
   }
 
   void _handleSuccess(Map<String, dynamic> data) {
-    final command = waitingSuccess.remove(data["commandId"]);
+    final command = _waitingSuccess.remove(data["commandId"]);
 
     if (command == null) return;
 
-    command.successHandler?.call(data["data"]);
+    command.successHandler?.call(data["params"]);
   }
 
   void _handleError(Map<String, dynamic> data) {
-    waitingSuccess.remove(data["commandId"]);
+    final command = _waitingSuccess.remove(data["commandId"]);
 
-    log(data["data"]);
+    if (command == null) return;
+
+    command.errorHandler?.call(data["params"]);
   }
 
   Future<void> dispose() async {
@@ -204,45 +241,236 @@ class SocketManager {
   }
 }
 
-void playMoveHandler(dynamic params) {
-  final move = params["move"];
+void _endGameHandler(dynamic params) {
+  final gameId = params["gameId"];
+  final reason = params["reason"];
+  final result = params["result"];
+  final game = GetIt.I<DBManager>().getGame(gameId);
+
+  if (game == null) return;
+
+  game.gameState = 4;
+  game.notify = true;
+
+  final white = game.white.target!;
+  final black = game.black.target!;
+
+  switch (reason) {
+    case "firstmove":
+      game.special = "cancelled";
+      break;
+    case "timeout":
+      final who = result == "w" ? "white" : "black";
+      game.special = "$who wins due to the timeout";
+      switch (result) {
+        case "w":
+          game.winner = 0;
+          white.timeLeft = 0;
+          break;
+        case "b":
+          game.winner = 1;
+          black.timeLeft = 0;
+          break;
+        default:
+      }
+      break;
+    default:
+  }
+  GetIt.I<DBManager>().putGame(game);
+  GetIt.I<DBManager>().putManyPlayerState([white, black]);
+}
+
+void _gameRequestHandler(dynamic params) {
+  final request = GameRequest.fromJson(params);
+  GetIt.I<GameRequestsManager>().addGameRequest(request);
+}
+
+void _statusUpdateHandler(dynamic params) {
+  String nick = params["nick"];
+  String status = params["status"];
+
+  final friend = GetIt.I<PlayerStatusManager>().getPlayerStatus(nick);
+
+  if (friend.status == status) return;
+  friend.status = status;
+
+  final adder = status == "online" ? 1 : -1;
+  GetIt.I<PlayerStatusManager>().onlineCounter.value += adder;
+}
+
+void _connectToGameHandler(dynamic params) {
+  final game = GetIt.I<DBManager>().getGame(params["gameId"]);
+
+  if (game == null) return;
+
+  final playerState = params["playerState"];
+
+  if (playerState != null) {
+    final ps = PlayerState.fromJson(playerState);
+    game.white.target ??= ps;
+    game.black.target ??= ps;
+    game.gameState = 2;
+  } else {
+    //TODO: add observer to game
+  }
+
+  GetIt.I<DBManager>().putGame(game);
+}
+
+void checkAllStatusesHandler(dynamic params) {
+  final statuses = List.from(params["statuses"]);
+  final friends = statuses
+      .map((e) => Player(nick: e["nick"], status: e["status"]))
+      .toList();
+
+  GetIt.I<PlayerStatusManager>().setPlayers(friends);
+}
+
+void playMoveHandler(dynamic params, [bool incoming = false]) {
+  final game = GetIt.I<DBManager>().getGame(params["gameId"]);
+
+  if (game == null) return;
+
+  // Update game values
   final lastplayed = params["lastplayed"];
-  final target = ChessCoord.fromString(move["target"]);
-  final source = ChessCoord.fromString(move["source"]);
+  game.lastPlayed = lastplayed;
 
-  final game = DBManager.instance.getGame(params["gameId"])!;
-
-  // If its first move
-  if (game.gameState == 2) {
+  // If its black's first move
+  if (game.gameState == 2 && game.boardState.target!.turn == 1) {
     game.gameState = 3;
   }
-  game.lastPlayed = lastplayed;
-  final bs = game.boardState.target!;
-  final board = bs.toBoard();
 
-  board[target.row][target.column] = board[source.row][source.column];
-  board[source.row][source.column] = null;
-  board[target.row][target.column]!.move(target);
-
-  bs.updateBoard(board);
-
-  bs.turn = ++bs.turn % 2;
-
-  DBManager.instance.putBoardState(bs);
-
-  final ps = PlayerState.fromJson(params["playerState"]);
-
-  if (game.black.target!.nick == ps.nick) {
-    final black = game.black.target!;
-    black.timeLeft = ps.timeLeft;
-    DBManager.instance.putPlayerState(black);
-  } else if (game.white.target!.nick == ps.nick) {
-    final white = game.white.target!;
-    white.timeLeft = ps.timeLeft;
-    DBManager.instance.putPlayerState(white);
+  final special = params["special"];
+  if (special != null) {
+    game.special = special;
+    switch (special) {
+      case "checkmate":
+        game.winner = game.boardState.target!.turn;
+        game.gameState = 4;
+        break;
+      case "stalemate":
+        game.gameState = 4;
+        break;
+      default:
+    }
+  } else {
+    game.special = null;
   }
 
-  DBManager.instance.putGame(game);
+  // That means you declined the draw request
+  if (game.drawRequestFrom != null &&
+      game.drawRequestFrom != GetIt.I<UserManager>().nick) {
+    game.drawRequestFrom = null;
+  }
+
+  // If function is called from directly from socket, that means that move
+  // is played by opponent. Otherwise, this was called from success handler
+  // by means this is our move.
+  game.notify = incoming;
+
+  final move = params["move"];
+  final bs = game.boardState.target!;
+  final target = ChessCoord.fromString(move["target"]);
+  final source = ChessCoord.fromString(move["source"]);
+  String? promote = move["promote"];
+
+  // Get current infos
+  final board = bs.toBoard();
+  final caslingRights = bs.toCastleSide();
+  final enPassant =
+      bs.enPassant == null ? null : ChessCoord.fromString(bs.enPassant!);
+  final playerColor =
+      game.playerColor == 0 ? PieceColor.white : PieceColor.black;
+
+  final moveClass = MoveLogic(
+    promote: promote,
+    enPassant: enPassant,
+    board: board,
+    target: target,
+    source: source,
+    castlingRights: caslingRights,
+    playerColor: playerColor,
+  )..makeMove();
+
+  // Update board state
+  bs.updateBoard(moveClass.board);
+  bs.updateCastleSide(moveClass.castlingRights);
+  bs.enPassant = moveClass.enPassant?.toString();
+  bs.turn = ++bs.turn % 2;
+
+  // Update player states
+  final white = PlayerState.fromJson(params["white"]);
+  final black = PlayerState.fromJson(params["black"]);
+  final oldWhite = game.white.target!;
+  final oldBlack = game.black.target!;
+  white.id = oldWhite.id;
+  black.id = oldBlack.id;
+
+  // Save changes to DB
+  GetIt.I<DBManager>().putBoardState(bs);
+  GetIt.I<DBManager>().putManyPlayerState([white, black]);
+  GetIt.I<DBManager>().putGame(game);
+}
+
+void drawOfferHandler(dynamic params) {
+  final game = GetIt.I<DBManager>().getGame(params["gameId"]);
+
+  if (game == null) return;
+
+  game.drawRequestFrom = params["from"];
+  GetIt.I<DBManager>().putGame(game);
+}
+
+void sendResponseToDrawOfferHandler(dynamic params) {
+  final game = GetIt.I<DBManager>().getGame(params["gameId"]);
+
+  if (game == null) return;
+
+  bool response = params["response"];
+
+  game.drawRequestFrom = null;
+
+  if (response) {
+    game.gameState = 4;
+    game.special = "draw";
+    game.winner = 2;
+
+    // Set active timer to current value
+    final turn = game.boardState.target!.turn;
+
+    final player = turn == 0 ? game.white.target! : game.black.target!;
+
+    player.timeLeft = PlayerState.fromJson(params["playerState"]).timeLeft;
+
+    GetIt.I<DBManager>().putPlayerState(player);
+  }
+
+  GetIt.I<DBManager>().putGame(game);
+}
+
+void resignHandler(dynamic params) {
+  final game = GetIt.I<DBManager>().getGame(params["gameId"]);
+
+  if (game == null) return;
+
+  final who = params["who"];
+
+  // Set active timer to current value
+  final turn = game.boardState.target!.turn;
+  final player = turn == 0 ? game.white.target! : game.black.target!;
+  player.timeLeft = PlayerState.fromJson(params["playerState"]).timeLeft;
+
+  GetIt.I<DBManager>().putPlayerState(player);
+
+  if (game.white.target!.nick == who) {
+    game.winner = 1;
+    game.special = "white resigned";
+  } else {
+    game.winner = 0;
+    game.special = "black resigned";
+  }
+  game.gameState = 4;
+  GetIt.I<DBManager>().putGame(game);
 }
 
 Future<Either<Failure, WebSocket>> _connectToSocket(
@@ -254,8 +482,6 @@ Future<Either<Failure, WebSocket>> _connectToSocket(
         'Cookie': cookies.join("; "),
       },
     );
-    //TODO: uncomment for latency detection
-    //..pingInterval = const Duration(seconds: 5);
     return Right(socket);
   } catch (e) {
     return const Left(Failure(

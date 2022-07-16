@@ -1,12 +1,12 @@
 import '../chess_coord.dart';
-import '../game_board_logic_cubit.dart';
+import '../piece_color.dart';
 import 'chess_piece.dart';
 
 class PawnPiece extends ChessPiece {
   PawnPiece({
-    required PieceColor color,
-    required ChessCoord coord,
-  }) : super(color: color, coord: coord);
+    required super.color,
+    required super.coord,
+  });
 
   bool get _isFirstMove {
     if (color == PieceColor.black && coord.row == 1) return true;
@@ -19,7 +19,6 @@ class PawnPiece extends ChessPiece {
   @override
   List<List<bool>> calculateMovableLocations(
     List<List<ChessPiece?>> board,
-    ChessCoord? enPassant,
   ) {
     final ml = List.generate(8, (i) => List.generate(8, (i) => false));
 
@@ -48,16 +47,23 @@ class PawnPiece extends ChessPiece {
       canMoveSetTrue(board, cc3, ml, move: false);
     }
 
-    // En passant
-    if (enPassant != null) {
-      if (coord.row == enPassant.row &&
-          (coord.column == enPassant.column + 1 ||
-              coord.column == enPassant.column - 1)) {
-        canMoveSetTrue(board, enPassant, ml);
+    return ml;
+  }
+
+  void calculateEnPassantLocations(
+    List<List<bool>> movableLocations,
+    ChessCoord? enPassant,
+  ) {
+    if (enPassant == null) return;
+
+    final cc2 = coord + ChessCoord(row: _adder, column: 1);
+    final cc3 = coord + ChessCoord(row: _adder, column: -1);
+
+    for (var cc in [cc2, cc3]) {
+      if (cc != null && cc == enPassant) {
+        movableLocations[cc.row][cc.column] = true;
       }
     }
-
-    return ml;
   }
 
   @override

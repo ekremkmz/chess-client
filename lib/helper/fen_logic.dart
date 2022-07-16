@@ -1,3 +1,5 @@
+import '../logic/cubit/game_board_logic/piece_color.dart';
+import '../logic/cubit/game_board_logic/castle_side.dart';
 import '../logic/cubit/game_board_logic/chess_coord.dart';
 import '../logic/cubit/game_board_logic/chess_piece/bishop_piece.dart';
 import '../logic/cubit/game_board_logic/chess_piece/chess_piece.dart';
@@ -6,24 +8,9 @@ import '../logic/cubit/game_board_logic/chess_piece/knight_piece.dart';
 import '../logic/cubit/game_board_logic/chess_piece/pawn_piece.dart';
 import '../logic/cubit/game_board_logic/chess_piece/queen_piece.dart';
 import '../logic/cubit/game_board_logic/chess_piece/rook_piece.dart';
-import '../logic/cubit/game_board_logic/game_board_logic_cubit.dart';
 
 Set<CastleSide> charsToCastleSide(String str) {
-  final castleSide = <CastleSide>{};
-
-  if (str.contains("Q")) {
-    castleSide.add(CastleSide.whiteQueenSide);
-  }
-  if (str.contains("K")) {
-    castleSide.add(CastleSide.whiteKingSide);
-  }
-  if (str.contains("q")) {
-    castleSide.add(CastleSide.blackQueenSide);
-  }
-  if (str.contains("k")) {
-    castleSide.add(CastleSide.blackKingSide);
-  }
-  return castleSide;
+  return str.split("").map(stringToCastleSide).toSet();
 }
 
 List<List<ChessPiece?>> charsToChessPieceList(String chars) {
@@ -39,79 +26,46 @@ List<List<ChessPiece?>> charsToChessPieceList(String chars) {
       final number = int.tryParse(selectedRow[column]);
 
       if (number == null) {
+        final char = selectedRow[column];
         final coord = ChessCoord(row: row, column: list.length);
+        final color =
+            char == char.toUpperCase() ? PieceColor.white : PieceColor.black;
 
-        switch (selectedRow[column]) {
-          case "r":
-            list.add(RookPiece(
-              color: PieceColor.black,
-              coord: coord,
-            ));
-            break;
-          case "n":
-            list.add(KnightPiece(
-              color: PieceColor.black,
-              coord: coord,
-            ));
-            break;
-          case "b":
-            list.add(BishopPiece(
-              color: PieceColor.black,
-              coord: coord,
-            ));
-            break;
-          case "q":
-            list.add(QueenPiece(
-              color: PieceColor.black,
-              coord: coord,
-            ));
-            break;
-          case "k":
-            list.add(KingPiece(
-              color: PieceColor.black,
-              coord: coord,
-            ));
-            break;
-          case "p":
-            list.add(PawnPiece(
-              color: PieceColor.black,
-              coord: coord,
-            ));
-            break;
+        switch (char.toUpperCase()) {
           case "R":
             list.add(RookPiece(
-              color: PieceColor.white,
+              color: color,
               coord: coord,
             ));
             break;
           case "N":
             list.add(KnightPiece(
-              color: PieceColor.white,
+              color: color,
               coord: coord,
             ));
             break;
           case "B":
             list.add(BishopPiece(
-              color: PieceColor.white,
+              color: color,
               coord: coord,
             ));
             break;
           case "Q":
             list.add(QueenPiece(
-              color: PieceColor.white,
+              color: color,
               coord: coord,
             ));
             break;
           case "K":
             list.add(KingPiece(
-              color: PieceColor.white,
+              color: color,
               coord: coord,
             ));
             break;
           case "P":
           default:
             list.add(PawnPiece(
-              color: PieceColor.white,
+              color: color,
               coord: coord,
             ));
             break;
@@ -128,16 +82,12 @@ List<List<ChessPiece?>> charsToChessPieceList(String chars) {
 String chessPieceListToChars(List<List<ChessPiece?>> lists) {
   final chars = <String>[];
 
-  for (var row = 0; row < lists.length; row++) {
-    final list = lists[row];
-
+  for (var list in lists) {
     final selectedRow = <String>[];
 
     var nullCounter = 0;
 
-    for (var column = 0; column < list.length; column++) {
-      final chessPiece = list[column];
-
+    for (var chessPiece in list) {
       if (chessPiece != null) {
         if (nullCounter != 0) {
           selectedRow.add("$nullCounter");

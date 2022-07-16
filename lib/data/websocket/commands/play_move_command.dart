@@ -2,22 +2,21 @@ import 'command.dart';
 import '../../../logic/cubit/game_board_logic/chess_coord.dart';
 
 class PlayMoveCommand extends Command {
+  final String? promote;
   final String gameId;
   final ChessCoord source;
   final ChessCoord target;
 
   PlayMoveCommand({
+    this.promote,
     required this.gameId,
     required this.source,
     required this.target,
-    this.successHandler,
+    super.successHandler,
   });
 
   @override
   String get commandTag => "playMove";
-
-  @override
-  SuccessHandlerCallback? successHandler;
 
   @override
   Map<String, dynamic> toMap() {
@@ -28,6 +27,7 @@ class PlayMoveCommand extends Command {
         "gameId": gameId,
         "source": source.toString(),
         "target": target.toString(),
+        if (promote != null) "promote": promote!
       },
     };
   }

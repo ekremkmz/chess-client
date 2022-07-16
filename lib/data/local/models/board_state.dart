@@ -1,8 +1,8 @@
-import '../../../helper/fen_logic.dart';
-
-import '../../../logic/cubit/game_board_logic/chess_piece/chess_piece.dart';
-import '../../../logic/cubit/game_board_logic/game_board_logic_cubit.dart';
+import '../../../logic/cubit/game_board_logic/castle_side.dart';
 import 'package:objectbox/objectbox.dart';
+
+import '../../../helper/fen_logic.dart';
+import '../../../logic/cubit/game_board_logic/chess_piece/chess_piece.dart';
 
 @Entity()
 class BoardState {
@@ -23,9 +23,12 @@ class BoardState {
 
   List<List<ChessPiece?>> toBoard() => charsToChessPieceList(board);
 
+  Set<CastleSide> toCastleSide() =>
+      castleSides.split("").map(stringToCastleSide).toSet();
+
   void updateBoard(List<List<ChessPiece?>> board) =>
       this.board = chessPieceListToChars(board);
 
-  Set<CastleSide> toCastleSideSet() =>
-      castleSides.split("").map(stringToCastleSide).toSet();
+  void updateCastleSide(Set<CastleSide> castleSide) =>
+      castleSides = castleSide.map(castleSideToString).join();
 }

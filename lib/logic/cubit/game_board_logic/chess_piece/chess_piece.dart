@@ -1,5 +1,5 @@
 import '../chess_coord.dart';
-import '../game_board_logic_cubit.dart';
+import '../piece_color.dart';
 
 abstract class ChessPiece {
   ChessPiece({
@@ -13,7 +13,6 @@ abstract class ChessPiece {
 
   List<List<bool>> calculateMovableLocations(
     List<List<ChessPiece?>> board,
-    ChessCoord? enPassant,
   );
 
   String get name;

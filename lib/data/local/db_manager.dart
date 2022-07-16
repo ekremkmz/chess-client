@@ -1,26 +1,23 @@
 import 'dart:io';
 
-import 'package:chess/data/local/models/board_state.dart';
-import 'package:chess/data/local/models/player_state.dart';
 import 'package:flutter/material.dart';
+import 'package:get_it/get_it.dart';
 
-import '../globals.dart';
-import 'models/game.dart';
 import '../../objectbox.g.dart';
+import '../globals.dart';
+import 'models/board_state.dart';
+import 'models/game.dart';
+import 'models/player_state.dart';
 
 class DBManager {
-  DBManager._();
+  DBManager();
 
-  static DBManager? _instance;
-
-  static DBManager get instance => _instance ??= DBManager._();
-
-  static Future<void> init() async {
-    instance._store =
-        await openStore(directory: "${Globals.appDir.path}/objectbox");
-    instance._gameBox = instance._store.box<Game>();
-    instance._playerStateBox = instance._store.box<PlayerState>();
-    instance._boardStateBox = instance._store.box<BoardState>();
+  Future<DBManager> init() async {
+    _store = await openStore(directory: "${Globals.appDir.path}/objectbox");
+    _gameBox = _store.box<Game>();
+    _playerStateBox = _store.box<PlayerState>();
+    _boardStateBox = _store.box<BoardState>();
+    return this;
   }
 
   late Store _store;
@@ -33,16 +30,20 @@ class DBManager {
     return qb.build().findFirst();
   }
 
-  void putGame(Game game) {
-    _gameBox.put(game);
+  int putGame(Game game) {
+    return _gameBox.put(game);
   }
 
-  void putPlayerState(PlayerState ps) {
-    _playerStateBox.put(ps);
+  int putPlayerState(PlayerState ps) {
+    return _playerStateBox.put(ps);
   }
 
-  void putBoardState(BoardState bs) {
-    _boardStateBox.put(bs);
+  List<int> putManyPlayerState(List<PlayerState> ps) {
+    return _playerStateBox.putMany(ps);
+  }
+
+  int putBoardState(BoardState bs) {
+    return _boardStateBox.put(bs);
   }
 
   Stream<Game?> getGameAsStream(String uid, {bool triggerImmediately = false}) {
@@ -50,15 +51,15 @@ class DBManager {
     return qb
         .watch(triggerImmediately: triggerImmediately)
         .asBroadcastStream()
-        .asyncMap((event) => event.findFirst());
+        .map((event) => event.findFirst());
   }
 
   Stream<List<Game>> getAllGamesStream() {
-    return _gameBox
-        .query()
+    final qb = _gameBox.query()..order(Game_.id, flags: Order.descending);
+    return qb
         .watch(triggerImmediately: true)
         .asBroadcastStream()
-        .asyncMap<List<Game>>((event) => event.find());
+        .map((event) => event.find());
   }
 
   void clearDatabase() {
@@ -73,5 +74,13 @@ class DBManager {
 
   List<Game> getAllNotEndedGames() {
     return _gameBox.query(Game_.gameState.lessThan(4)).build().find();
+  }
+
+  Stream<int> getPlayableGamesCountStream() {
+    return _gameBox
+        .query(Game_.notify.equals(true))
+        .watch(triggerImmediately: true)
+        .asBroadcastStream()
+        .map((event) => event.count());
   }
 }

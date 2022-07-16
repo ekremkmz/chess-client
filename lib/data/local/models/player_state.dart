@@ -8,7 +8,7 @@ class PlayerState {
 
   late String nick;
 
-  // Milliseconds
+  /// Milliseconds
   late int timeLeft;
 
   factory PlayerState.fromJson(data) {
